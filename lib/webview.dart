@@ -1,16 +1,15 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 const EVERGLOT_URL = 'https://demo.everglot.com';
 
-class WebViewExample extends StatefulWidget {
+class WebAppContainer extends StatefulWidget {
   @override
-  WebViewExampleState createState() => WebViewExampleState();
+  WebAppState createState() => WebAppState();
 }
 
-class WebViewExampleState extends State<WebViewExample> {
+class WebAppState extends State<WebAppContainer> {
   @override
   void initState() {
     super.initState();
