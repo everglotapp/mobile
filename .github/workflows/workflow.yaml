@@ -35,7 +35,7 @@ jobs:
     build_android:
         name: Build for Android
         runs-on: ubuntu-latest
-        timeout-minutes: 5
+        timeout-minutes: 8
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Checkout main
@@ -61,7 +61,7 @@ jobs:
     build_ios:
         name: Build for iOS
         runs-on: macos-latest
-        timeout-minutes: 5
+        timeout-minutes: 8
         if: github.ref == 'refs/heads/main'
         steps:
             - name: Checkout main
