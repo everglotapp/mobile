@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
+import 'package:everglot/utils/notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+  runApp(App());
+}
+
+Future<void> _handleBackgroundMessage(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
   await Firebase.initializeApp();
 
   print("Handling a background message: ${message.messageId}");
-}
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  runApp(App());
 }
 
 class App extends StatefulWidget {
@@ -40,38 +41,9 @@ class _AppState extends State<App> {
           if (snapshot.connectionState == ConnectionState.done) {
             print("Loaded app successfully");
 
-            (() async {
-              FirebaseMessaging messaging = FirebaseMessaging.instance;
+            getFcmToken();
+            listenForeground();
 
-              NotificationSettings settings = await messaging.requestPermission(
-                alert: true,
-                announcement: false,
-                badge: true,
-                carPlay: false,
-                criticalAlert: false,
-                provisional: false,
-                sound: true,
-              );
-              print('User granted permission: ${settings.authorizationStatus}');
-              if (settings.authorizationStatus ==
-                  AuthorizationStatus.authorized) {
-                String? token = await messaging.getToken();
-                if (token != null) {
-                  print("FCM token ${token}");
-                } else {
-                  print("failed to get FCM token");
-                }
-              }
-            })();
-            FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-              print('Got a message whilst in the foreground!');
-              print('Message data: ${message.data}');
-
-              if (message.notification != null) {
-                print(
-                    'Message also contained a notification: ${message.notification}');
-              }
-            });
             Map<int, Color> colorCodes = {
               50: Color.fromRGBO(69, 180, 66, .1),
               100: Color.fromRGBO(69, 180, 66, .2),
@@ -106,7 +78,7 @@ class _AppState extends State<App> {
                   "/webapp": (_) => new WebAppContainer(),
                 });
           }
-          print("Loading Everglot …");
+          print("Loading FirebaseApp …");
 
           return LoadingPage();
         });
