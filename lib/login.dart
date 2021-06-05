@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-const EVERGLOT_URL = 'https://demo.everglot.com';
+class LoginPageArguments {
+  bool signedOut = false;
+
+  LoginPageArguments(this.signedOut);
+}
 
 class LoginPage extends StatefulWidget {
   @override
@@ -38,7 +42,19 @@ class LoginPageState extends State<LoginPage> {
         }
       }
     });
-    _googleSignIn.signInSilently();
+    (() async {
+      await Future.delayed(Duration.zero);
+      final args = ModalRoute.of(context)!.settings.arguments;
+      if (args == null) {
+        _googleSignIn.signInSilently();
+      } else {
+        if ((args as LoginPageArguments).signedOut) {
+          _googleSignIn.signOut();
+        } else {
+          _googleSignIn.signInSilently();
+        }
+      }
+    })();
   }
 
   Future<void> _handleGoogleSignIn() async {

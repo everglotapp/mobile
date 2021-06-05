@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:everglot/constants.dart';
+import 'package:everglot/login.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -15,6 +16,8 @@ class WebAppContainer extends StatefulWidget {
 }
 
 class WebAppState extends State<WebAppContainer> {
+  bool jsRanOnce = false;
+
   @override
   void initState() {
     super.initState();
@@ -26,18 +29,31 @@ class WebAppState extends State<WebAppContainer> {
 
   @override
   Widget build(BuildContext context) {
-    var _webViewController;
+    WebViewController? _webViewController;
     final args = ModalRoute.of(context)!.settings.arguments as WebAppArguments;
 
     return WebView(
       initialUrl: EVERGLOT_URL,
       javascriptMode: JavascriptMode.unrestricted,
+      javascriptChannels: Set.from([
+        JavascriptChannel(
+            name: 'WebViewLocationChange',
+            onMessageReceived: (JavascriptMessage message) async {
+              final path = message.message;
+              if (path.startsWith("/join") || path.startsWith("/login")) {
+                await Navigator.pushReplacementNamed(context, "/",
+                    arguments: LoginPageArguments(true));
+              }
+            })
+      ]),
       onWebViewCreated: (WebViewController controller) {
         _webViewController = controller;
+        print("Web view created");
       },
       onPageFinished: (String page) {
         final token = args.idToken;
-        _webViewController.evaluateJavascript("""
+        _webViewController!.evaluateJavascript("""
+          console.log("Trying to log in");
           fetch("/login", {
             method: "post",
             headers: {
@@ -48,7 +64,35 @@ class WebAppState extends State<WebAppContainer> {
             redirect: "follow"
           });
         """);
-        // TODO: Set up listener for page change, upon sign out redirect to LoginPage
+
+        if (!jsRanOnce) {
+          setState(() {
+            jsRanOnce = true;
+          });
+          _webViewController!.evaluateJavascript("""
+        history.pushState = ( f => function pushState(){
+            var ret = f.apply(this, arguments);
+            window.dispatchEvent(new Event('pushstate'));
+            window.dispatchEvent(new Event('locationchange'));
+            return ret;
+        })(history.pushState);
+
+        history.replaceState = ( f => function replaceState(){
+            var ret = f.apply(this, arguments);
+            window.dispatchEvent(new Event('replacestate'));
+            window.dispatchEvent(new Event('locationchange'));
+            return ret;
+        })(history.replaceState);
+
+        window.addEventListener('popstate',()=>{
+            window.dispatchEvent(new Event('locationchange'))
+        });
+
+        window.addEventListener("locationchange", function() {
+          WebViewLocationChange.postMessage(window.location.pathname)
+        });
+        """);
+        }
       },
       gestureNavigationEnabled: true,
     );
