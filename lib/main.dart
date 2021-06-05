@@ -1,6 +1,10 @@
+// @dart=2.9
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:fluent_i18n/fluent_i18n.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webview.dart';
+import 'package:everglot/constants.dart';
 
 void main() {
   runApp(MyApp());
@@ -38,6 +42,13 @@ class MyApp extends StatelessWidget {
           primarySwatch: primary,
           fontFamily: "Noto",
         ),
+        localizationsDelegates: [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+          FluentLocalizationsDelegate(SUPPORTED_LOCALES),
+        ],
+        supportedLocales: SUPPORTED_LOCALES,
         routes: {
           "/": (_) => new LoginPage(),
           "/webapp": (_) => new WebAppContainer(),

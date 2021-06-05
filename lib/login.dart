@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:fluent_i18n/fluent_i18n.dart';
 
 const EVERGLOT_URL = 'https://demo.everglot.com';
 
@@ -43,6 +44,7 @@ class LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final i18n = FluentLocalizations.current();
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
@@ -56,9 +58,9 @@ class LoginPageState extends State<LoginPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         GoogleAuthButton(
-                          onPressed: _handleGoogleSignIn,
-                          darkMode: false, // if true second example
-                        ),
+                            onPressed: _handleGoogleSignIn,
+                            darkMode: false,
+                            text: i18n.getMessage('login-google-auth-button')),
                       ])
                 ]))));
   }

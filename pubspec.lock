@@ -64,7 +64,26 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.2.0"
+  fluent:
+    dependency: transitive
+    description:
+      name: fluent
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.2+3"
+  fluent_i18n:
+    dependency: "direct main"
+    description:
+      name: fluent_i18n
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0"
   flutter:
+    dependency: "direct main"
+    description: flutter
+    source: sdk
+    version: "0.0.0"
+  flutter_localizations:
     dependency: "direct main"
     description: flutter
     source: sdk
@@ -100,6 +119,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.10.0"
+  intl:
+    dependency: "direct overridden"
+    description:
+      name: intl
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.17.0"
   js:
     dependency: transitive
     description:
