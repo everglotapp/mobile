@@ -30,7 +30,7 @@ jobs:
                   flutter-version: ${{ env.flutter_version }}
             - run: flutter pub get
             - run: flutter test
-    build:
+    build_android:
         name: Build for Android
         runs-on: ubuntu-latest
         timeout-minutes: 5
@@ -55,7 +55,7 @@ jobs:
             - run: flutter test
             - run: flutter build apk
             - run: flutter build appbundle
-    build:
+    build_ios:
         name: Build for iOS
         runs-on: macos-latest
         timeout-minutes: 5
