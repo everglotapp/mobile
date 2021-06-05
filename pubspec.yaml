@@ -1,5 +1,5 @@
 name: everglot
-description: A new Flutter project.
+description: Learn languages together.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -28,6 +28,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
   webview_flutter: ^2.0.8
+  auth_buttons: ^1.0.1+3
+  google_sign_in: ^5.0.4
 
 dev_dependencies:
   flutter_test:

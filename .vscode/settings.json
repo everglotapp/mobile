@@ -1,7 +1,3 @@
 {
-  "editor.formatOnSave": true,
-  "[dart]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.tabSize": 2
-  }
+  "editor.formatOnSave": true
 }
