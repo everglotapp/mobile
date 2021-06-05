@@ -1,3 +1,5 @@
+import 'package:everglot/constants.dart';
+import 'package:everglot/webapp.dart';
 import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -11,6 +13,13 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   GoogleSignInAccount? _currentUser;
+  GoogleSignIn _googleSignIn = GoogleSignIn(
+    // TODO: Make this be the production one when building release.
+    clientId: GOOGLE_CLIENT_ID,
+    scopes: <String>[
+      'email',
+    ],
+  );
 
   @override
   void initState() {
@@ -23,7 +32,10 @@ class LoginPageState extends State<LoginPage> {
         } else {
           (() async {
             final authentication = await account.authentication;
-            print(authentication.idToken);
+            if (authentication.idToken != null) {
+              await Navigator.pushReplacementNamed(context, "/webapp",
+                  arguments: WebAppArguments(authentication.idToken as String));
+            }
           })();
         }
       });
@@ -63,13 +75,3 @@ class LoginPageState extends State<LoginPage> {
                 ]))));
   }
 }
-
-const GOOGLE_CLIENT_ID =
-    "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com";
-final GoogleSignIn _googleSignIn = GoogleSignIn(
-  // TODO: Make this be the production one when building release.
-  clientId: GOOGLE_CLIENT_ID,
-  scopes: <String>[
-    'email',
-  ],
-);

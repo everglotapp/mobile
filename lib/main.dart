@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:everglot/login.dart';
-import 'package:everglot/webview.dart';
+import 'package:everglot/webapp.dart';
 
 void main() {
   runApp(MyApp());
