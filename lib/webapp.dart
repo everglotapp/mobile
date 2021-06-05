@@ -1,8 +1,7 @@
 import 'dart:io';
+import 'package:everglot/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-
-const EVERGLOT_URL = 'https://demo.everglot.com';
 
 class WebAppArguments {
   final String idToken;
@@ -38,7 +37,6 @@ class WebAppState extends State<WebAppContainer> {
       },
       onPageFinished: (String page) {
         final token = args.idToken;
-        print(token);
         _webViewController.evaluateJavascript("""
           fetch("/login", {
             method: "post",
@@ -46,13 +44,11 @@ class WebAppState extends State<WebAppContainer> {
               Accept: "application/json",
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({method: "GOOGLE", idToken: "$token"}),
+            body: JSON.stringify({method: "google", idToken: "$token"}),
             redirect: "follow"
-          })
-            .then(function (...args) {
-              alert(JSON.stringify(...args));
-            });
+          });
         """);
+        // TODO: Set up listener for page change, upon sign out redirect to LoginPage
       },
       gestureNavigationEnabled: true,
     );
