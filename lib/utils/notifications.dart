@@ -20,10 +20,11 @@ getFcmToken() async {
   if (!Platform.isAndroid) {
     NotificationSettings _settings = _tryGetNotificationPermission(messaging);
     // settings.authorizationStatus == AuthorizationStatus.authorized;
+    _settings = _settings;
   }
   String? token = await messaging.getToken();
   if (token != null) {
-    print("Got FCM token ${token}");
+    print("Got FCM token $token");
   } else {
     print("Failed to get FCM token");
   }

@@ -12,9 +12,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
-  GoogleSignInAccount? _currentUser;
+  // GoogleSignInAccount? _currentUser;
   GoogleSignIn _googleSignIn = GoogleSignIn(
-    // TODO: Make this be the production one when building release.
     clientId: GOOGLE_CLIENT_ID,
     scopes: <String>[
       'email',
@@ -24,21 +23,20 @@ class LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-        if (account == null) {
-          print("null account");
-        } else {
-          (() async {
-            final authentication = await account.authentication;
-            if (authentication.idToken != null) {
-              await Navigator.pushReplacementNamed(context, "/webapp",
-                  arguments: WebAppArguments(authentication.idToken as String));
-            }
-          })();
+    _googleSignIn.onCurrentUserChanged
+        .listen((GoogleSignInAccount? account) async {
+      // setState(() {
+      //   _currentUser = account;
+      // });
+      if (account == null) {
+        print("null account");
+      } else {
+        final authentication = await account.authentication;
+        if (authentication.idToken != null) {
+          await Navigator.pushReplacementNamed(context, "/webapp",
+              arguments: WebAppArguments(authentication.idToken as String));
         }
-      });
+      }
     });
     _googleSignIn.signInSilently();
   }
@@ -51,7 +49,7 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
+  // Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
 
   @override
   Widget build(BuildContext context) {
