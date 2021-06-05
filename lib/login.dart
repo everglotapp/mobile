@@ -64,10 +64,11 @@ class LoginPageState extends State<LoginPage> {
   }
 }
 
+const GOOGLE_CLIENT_ID =
+    "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com";
 final GoogleSignIn _googleSignIn = GoogleSignIn(
   // TODO: Make this be the production one when building release.
-  clientId:
-      '457984069949-27t84k2dm2l8li57c32rjm114iedk15o.apps.googleusercontent.com',
+  clientId: GOOGLE_CLIENT_ID,
   scopes: <String>[
     'email',
   ],
