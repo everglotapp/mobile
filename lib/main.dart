@@ -89,7 +89,9 @@ class LoadingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-        textDirection: TextDirection.ltr, child: new Text("Loading Everglot "));
+        textDirection: TextDirection.ltr,
+        child: Container(
+            child: Column(children: [new Text("Loading Everglot ")])));
   }
 }
 
@@ -97,6 +99,8 @@ class ErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-        textDirection: TextDirection.ltr, child: new Text("Error"));
+        textDirection: TextDirection.ltr,
+        child: Container(
+            child: Column(children: [new Text("Error loading Everglot ")])));
   }
 }
