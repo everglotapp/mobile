@@ -72,7 +72,9 @@ class LoginPageState extends State<LoginPage> {
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
-              title: Text('Login to Everglot'),
+              title: Text('Login to Everglot',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
             body: Container(
                 child: Column(

@@ -4,9 +4,17 @@ import 'package:everglot/webapp.dart';
 import 'package:everglot/utils/notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/services.dart';
 
 void main() {
+  // Do not add anything before the below line.
   WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: primary,
+  ));
+  SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
+
   FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
   runApp(App());
 }
@@ -18,6 +26,20 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
 
   print("Handling a background message: ${message.messageId}");
 }
+
+Map<int, Color> colorCodes = {
+  50: Color.fromRGBO(69, 180, 66, .1),
+  100: Color.fromRGBO(69, 180, 66, .2),
+  200: Color.fromRGBO(69, 180, 66, .3),
+  300: Color.fromRGBO(69, 180, 66, .4),
+  400: Color.fromRGBO(69, 180, 66, .5),
+  500: Color.fromRGBO(69, 180, 66, .6),
+  600: Color.fromRGBO(69, 180, 66, .7),
+  700: Color.fromRGBO(69, 180, 66, .8),
+  800: Color.fromRGBO(69, 180, 66, .9),
+  900: Color.fromRGBO(69, 180, 66, 1),
+};
+MaterialColor primary = MaterialColor(0xFF45cdcd, colorCodes);
 
 class App extends StatefulWidget {
   @override
@@ -44,20 +66,6 @@ class _AppState extends State<App> {
             getFcmToken();
             listenForeground();
 
-            Map<int, Color> colorCodes = {
-              50: Color.fromRGBO(69, 180, 66, .1),
-              100: Color.fromRGBO(69, 180, 66, .2),
-              200: Color.fromRGBO(69, 180, 66, .3),
-              300: Color.fromRGBO(69, 180, 66, .4),
-              400: Color.fromRGBO(69, 180, 66, .5),
-              500: Color.fromRGBO(69, 180, 66, .6),
-              600: Color.fromRGBO(69, 180, 66, .7),
-              700: Color.fromRGBO(69, 180, 66, .8),
-              800: Color.fromRGBO(69, 180, 66, .9),
-              900: Color.fromRGBO(69, 180, 66, 1),
-            };
-            MaterialColor primary = MaterialColor(0xFF45cdcd, colorCodes);
-
             return MaterialApp(
                 title: 'Everglot',
                 theme: ThemeData(
@@ -78,20 +86,32 @@ class _AppState extends State<App> {
                   "/webapp": (_) => new WebAppContainer(),
                 });
           }
-          print("Loading FirebaseApp …");
 
-          return LoadingPage();
+          print("Loading FirebaseApp …");
+          return SplashScreen();
         });
   }
 }
 
-class LoadingPage extends StatelessWidget {
+class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
         textDirection: TextDirection.ltr,
         child: Container(
-            child: Column(children: [new Text("Loading Everglot ")])));
+            color: Colors.white,
+            child: Center(
+                child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                  new Text("Everglot",
+                      style: TextStyle(
+                          color: primary,
+                          fontFamily: "Noto",
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold))
+                ]))));
   }
 }
 
@@ -101,6 +121,18 @@ class ErrorPage extends StatelessWidget {
     return Directionality(
         textDirection: TextDirection.ltr,
         child: Container(
-            child: Column(children: [new Text("Error loading Everglot ")])));
+            color: primary,
+            child: Center(
+                child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                  new Text("Error loading Everglot. Please restart the app.",
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: "Noto",
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold))
+                ]))));
   }
 }
