@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "457984069949",
+    "project_id": "everglot-api",
+    "storage_bucket": "everglot-api.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:457984069949:android:171d9092790432d774b554",
+        "android_client_info": {
+          "package_name": "com.everglot"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "457984069949-27t84k2dm2l8li57c32rjm114iedk15o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.everglot",
+            "certificate_hash": "6e60021e639517ba6bfaa577d2cbcc2bea65730d"
+          }
+        },
+        {
+          "client_id": "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3fcBFRkqlxvACm7Rgaz5d35I4pS5_DNs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

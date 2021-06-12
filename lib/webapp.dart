@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:everglot/constants.dart';
+import 'package:everglot/login.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -15,6 +16,9 @@ class WebAppContainer extends StatefulWidget {
 }
 
 class WebAppState extends State<WebAppContainer> {
+  bool _loggedIn = false;
+  WebViewController? _webViewController;
+
   @override
   void initState() {
     super.initState();
@@ -24,31 +28,113 @@ class WebAppState extends State<WebAppContainer> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    var _webViewController;
+  _tryLogin() async {
     final args = ModalRoute.of(context)!.settings.arguments as WebAppArguments;
-
-    return WebView(
-      initialUrl: EVERGLOT_URL,
-      javascriptMode: JavascriptMode.unrestricted,
-      onWebViewCreated: (WebViewController controller) {
-        _webViewController = controller;
-      },
-      onPageFinished: (String page) {
-        final token = args.idToken;
-        _webViewController.evaluateJavascript("""
-          fetch("/login", {
+    final token = args.idToken;
+    await _webViewController?.evaluateJavascript("""
+          console.log("Trying to log in");
+          var res = fetch("/login", {
             method: "post",
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({method: "google", idToken: "$token"}),
+            body: JSON.stringify({
+              method: "google",
+              idToken: "$token"
+            }),
             redirect: "follow"
+          }).then(function (response) {
+            if (response && response.redirected && response.url && response.url.length) {
+                history.replaceState(null, '', response.url);
+                return
+            }
+            response.json().then(function (res) {
+              console.log(JSON.stringify(res));
+              if (res && res.success) {
+                WebViewLoginState.postMessage("1");
+              }
+            }).catch(function (e) {
+              console.log("Failed to parse response as JSON", res, e)
+            });
+          }).catch(function(e) {
+            console.log("Login HTTP request failed", e)
           });
         """);
-        // TODO: Set up listener for page change, upon sign out redirect to LoginPage
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WebView(
+      initialUrl: EVERGLOT_URL,
+      javascriptMode: JavascriptMode.unrestricted,
+      javascriptChannels: Set.from([
+        JavascriptChannel(
+            name: 'WebViewLocationChange',
+            onMessageReceived: (JavascriptMessage message) async {
+              final path = message.message;
+              print("Location changed: " + path);
+              if (path.startsWith("/join") || path.startsWith("/login")) {
+                setState(() {
+                  _loggedIn = false;
+                });
+                await Navigator.pushReplacementNamed(context, "/",
+                    arguments: LoginPageArguments(true));
+              }
+            }),
+        JavascriptChannel(
+            name: 'WebViewLoginState',
+            onMessageReceived: (JavascriptMessage message) async {
+              setState(() {
+                _loggedIn = message.message == "1";
+              });
+              print("Login state changed: " + message.message);
+              if (_loggedIn) {
+                await _webViewController?.loadUrl(EVERGLOT_URL + "/signup");
+              } else {
+                await Navigator.pushReplacementNamed(context, "/",
+                    arguments: LoginPageArguments(true));
+              }
+            })
+      ]),
+      onWebViewCreated: (WebViewController controller) {
+        _webViewController = controller;
+        print("Web view created");
+      },
+      onPageFinished: (String page) {
+        print("Page finished: " + page);
+        if (page.startsWith(EVERGLOT_URL + "/login")) {
+          setState(() {
+            _loggedIn = false;
+          });
+          _tryLogin();
+        }
+        _webViewController?.evaluateJavascript("""
+        if (!window.locationChangeListenersInitialized) {
+          history.pushState = ( f => function pushState(){
+              var ret = f.apply(this, arguments);
+              window.dispatchEvent(new Event('pushstate'));
+              window.dispatchEvent(new Event('locationchange'));
+              return ret;
+          })(history.pushState);
+
+          history.replaceState = ( f => function replaceState(){
+              var ret = f.apply(this, arguments);
+              window.dispatchEvent(new Event('replacestate'));
+              window.dispatchEvent(new Event('locationchange'));
+              return ret;
+          })(history.replaceState);
+
+          window.addEventListener('popstate',()=>{
+              window.dispatchEvent(new Event('locationchange'))
+          });
+
+          window.addEventListener("locationchange", function() {
+              WebViewLocationChange.postMessage(window.location.pathname)
+          });
+          window.locationChangeListenersInitialized = true;
+        }
+        """);
       },
       gestureNavigationEnabled: true,
     );

@@ -15,7 +15,7 @@ import 'package:everglot/main.dart';
 void main() {
   testWidgets('Login smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(MyApp());
+    await tester.pumpWidget(App());
 
     // Verify that there is a button
     expect(find.byType(GoogleAuthButton), findsOneWidget);

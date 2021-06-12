@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-const EVERGLOT_URL = 'https://demo.everglot.com';
+class LoginPageArguments {
+  bool signedOut = false;
+
+  LoginPageArguments(this.signedOut);
+}
 
 class LoginPage extends StatefulWidget {
   @override
@@ -12,9 +16,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class LoginPageState extends State<LoginPage> {
-  GoogleSignInAccount? _currentUser;
+  // GoogleSignInAccount? _currentUser;
   GoogleSignIn _googleSignIn = GoogleSignIn(
-    // TODO: Make this be the production one when building release.
     clientId: GOOGLE_CLIENT_ID,
     scopes: <String>[
       'email',
@@ -24,23 +27,34 @@ class LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-      setState(() {
-        _currentUser = account;
-        if (account == null) {
-          print("null account");
-        } else {
-          (() async {
-            final authentication = await account.authentication;
-            if (authentication.idToken != null) {
-              await Navigator.pushReplacementNamed(context, "/webapp",
-                  arguments: WebAppArguments(authentication.idToken as String));
-            }
-          })();
+    _googleSignIn.onCurrentUserChanged
+        .listen((GoogleSignInAccount? account) async {
+      // setState(() {
+      //   _currentUser = account;
+      // });
+      if (account == null) {
+        print("null account");
+      } else {
+        final authentication = await account.authentication;
+        if (authentication.idToken != null) {
+          await Navigator.pushReplacementNamed(context, "/webapp",
+              arguments: WebAppArguments(authentication.idToken as String));
         }
-      });
+      }
     });
-    _googleSignIn.signInSilently();
+    (() async {
+      await Future.delayed(Duration.zero);
+      final args = ModalRoute.of(context)!.settings.arguments;
+      if (args == null) {
+        _googleSignIn.signInSilently();
+      } else {
+        if ((args as LoginPageArguments).signedOut) {
+          _googleSignIn.signOut();
+        } else {
+          _googleSignIn.signInSilently();
+        }
+      }
+    })();
   }
 
   Future<void> _handleGoogleSignIn() async {
@@ -51,14 +65,16 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
+  // Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(
-              title: Text('Login to Everglot'),
+              title: Text('Login to Everglot',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
             ),
             body: Container(
                 child: Column(
