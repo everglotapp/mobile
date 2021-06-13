@@ -65,51 +65,53 @@ class WebAppState extends State<WebAppContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return WebView(
-      initialUrl: EVERGLOT_URL,
-      javascriptMode: JavascriptMode.unrestricted,
-      javascriptChannels: Set.from([
-        JavascriptChannel(
-            name: 'WebViewLocationChange',
-            onMessageReceived: (JavascriptMessage message) async {
-              final path = message.message;
-              print("Location changed: " + path);
-              if (path.startsWith("/join") || path.startsWith("/login")) {
-                setState(() {
-                  _loggedIn = false;
-                });
-                await Navigator.pushReplacementNamed(context, "/",
-                    arguments: LoginPageArguments(true));
-              }
-            }),
-        JavascriptChannel(
-            name: 'WebViewLoginState',
-            onMessageReceived: (JavascriptMessage message) async {
+    return Scaffold(
+        resizeToAvoidBottomInset: true,
+        body: WebView(
+          initialUrl: EVERGLOT_URL,
+          javascriptMode: JavascriptMode.unrestricted,
+          javascriptChannels: Set.from([
+            JavascriptChannel(
+                name: 'WebViewLocationChange',
+                onMessageReceived: (JavascriptMessage message) async {
+                  final path = message.message;
+                  print("Location changed: " + path);
+                  if (path.startsWith("/join") || path.startsWith("/login")) {
+                    setState(() {
+                      _loggedIn = false;
+                    });
+                    await Navigator.pushReplacementNamed(context, "/",
+                        arguments: LoginPageArguments(true));
+                  }
+                }),
+            JavascriptChannel(
+                name: 'WebViewLoginState',
+                onMessageReceived: (JavascriptMessage message) async {
+                  setState(() {
+                    _loggedIn = message.message == "1";
+                  });
+                  print("Login state changed: " + message.message);
+                  if (_loggedIn) {
+                    await _webViewController?.loadUrl(EVERGLOT_URL + "/signup");
+                  } else {
+                    await Navigator.pushReplacementNamed(context, "/",
+                        arguments: LoginPageArguments(true));
+                  }
+                })
+          ]),
+          onWebViewCreated: (WebViewController controller) {
+            _webViewController = controller;
+            print("Web view created");
+          },
+          onPageFinished: (String page) {
+            print("Page finished: " + page);
+            if (page.startsWith(EVERGLOT_URL + "/login")) {
               setState(() {
-                _loggedIn = message.message == "1";
+                _loggedIn = false;
               });
-              print("Login state changed: " + message.message);
-              if (_loggedIn) {
-                await _webViewController?.loadUrl(EVERGLOT_URL + "/signup");
-              } else {
-                await Navigator.pushReplacementNamed(context, "/",
-                    arguments: LoginPageArguments(true));
-              }
-            })
-      ]),
-      onWebViewCreated: (WebViewController controller) {
-        _webViewController = controller;
-        print("Web view created");
-      },
-      onPageFinished: (String page) {
-        print("Page finished: " + page);
-        if (page.startsWith(EVERGLOT_URL + "/login")) {
-          setState(() {
-            _loggedIn = false;
-          });
-          _tryLogin();
-        }
-        _webViewController?.evaluateJavascript("""
+              _tryLogin();
+            }
+            _webViewController?.evaluateJavascript("""
         if (!window.locationChangeListenersInitialized) {
           history.pushState = ( f => function pushState(){
               var ret = f.apply(this, arguments);
@@ -135,8 +137,8 @@ class WebAppState extends State<WebAppContainer> {
           window.locationChangeListenersInitialized = true;
         }
         """);
-      },
-      gestureNavigationEnabled: true,
-    );
+          },
+          gestureNavigationEnabled: true,
+        ));
   }
 }
