@@ -138,7 +138,18 @@ class WebAppState extends State<WebAppContainer> {
         }
         """);
           },
+          userAgent: _getWebviewUserAgent(),
           gestureNavigationEnabled: true,
         ));
+  }
+
+  String _getWebviewUserAgent() {
+    if (Platform.isAndroid) {
+      return "ANDROID_WEBVIEW";
+    }
+    if (Platform.isIOS) {
+      return "IOS_WEBVIEW";
+    }
+    return "MOBILE_APP_WEBVIEW";
   }
 }
