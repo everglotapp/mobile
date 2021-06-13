@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "457984069949-5giaecr690rps0g9f5unj0j5j1qt22ck.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.everglot",
+            "certificate_hash": "1e03e70569295cad26735d83c94c9b2de45589f9"
+          }
+        },
+        {
           "client_id": "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -37,6 +45,13 @@
             {
               "client_id": "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "457984069949-79sdutia34vvkn2fcetcq1sblmhe38gk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.everglot"
+              }
             }
           ]
         }
