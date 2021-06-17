@@ -92,7 +92,7 @@ class WebAppState extends State<WebAppContainer> {
                   });
                   print("Login state changed: " + message.message);
                   if (_loggedIn) {
-                    await _webViewController?.loadUrl(EVERGLOT_URL + "/signup");
+                    await _webViewController?.loadUrl(EVERGLOT_URL + "/");
                   } else {
                     await Navigator.pushReplacementNamed(context, "/",
                         arguments: LoginPageArguments(true));
