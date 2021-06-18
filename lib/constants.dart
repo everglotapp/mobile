@@ -5,4 +5,4 @@ const GOOGLE_CLIENT_ID_ANDROID =
 const GOOGLE_CLIENT_ID_WEB =
     "457984069949-bgc3aj14fi47olkp0arn7is4cr07cfla.apps.googleusercontent.com";
 
-const EVERGLOT_URL = 'https://app.everglot.com';
+const EVERGLOT_AUTH_METHOD_GOOGLE = "google";

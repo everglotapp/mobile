@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:everglot/constants.dart';
 import 'package:everglot/login.dart';
+import 'package:everglot/utils/webapp.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -18,6 +18,7 @@ class WebAppContainer extends StatefulWidget {
 class WebAppState extends State<WebAppContainer> {
   bool _loggedIn = false;
   WebViewController? _webViewController;
+  final Future<String> _initialization = getEverglotUrl();
 
   @override
   void initState() {
@@ -65,82 +66,94 @@ class WebAppState extends State<WebAppContainer> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        resizeToAvoidBottomInset: true,
-        body: WebView(
-          initialUrl: EVERGLOT_URL,
-          javascriptMode: JavascriptMode.unrestricted,
-          javascriptChannels: Set.from([
-            JavascriptChannel(
-                name: 'WebViewLocationChange',
-                onMessageReceived: (JavascriptMessage message) async {
-                  final path = message.message;
-                  print("Location changed: " + path);
-                  if (path.startsWith("/join") || path.startsWith("/login")) {
-                    setState(() {
-                      _loggedIn = false;
-                    });
-                    await Navigator.pushReplacementNamed(context, "/",
-                        arguments: LoginPageArguments(true));
-                  }
-                }),
-            JavascriptChannel(
-                name: 'WebViewLoginState',
-                onMessageReceived: (JavascriptMessage message) async {
-                  setState(() {
-                    _loggedIn = message.message == "1";
-                  });
-                  print("Login state changed: " + message.message);
-                  if (_loggedIn) {
-                    await _webViewController?.loadUrl(EVERGLOT_URL + "/");
-                  } else {
-                    await Navigator.pushReplacementNamed(context, "/",
-                        arguments: LoginPageArguments(true));
-                  }
-                })
-          ]),
-          onWebViewCreated: (WebViewController controller) {
-            _webViewController = controller;
-            print("Web view created");
-          },
-          onPageFinished: (String page) {
-            print("Page finished: " + page);
-            if (page.startsWith(EVERGLOT_URL + "/login")) {
-              setState(() {
-                _loggedIn = false;
+    return FutureBuilder(
+        future: _initialization,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Scaffold();
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Scaffold(
+                resizeToAvoidBottomInset: true,
+                body: WebView(
+                  initialUrl: snapshot.data as String,
+                  javascriptMode: JavascriptMode.unrestricted,
+                  javascriptChannels: Set.from([
+                    JavascriptChannel(
+                        name: 'WebViewLocationChange',
+                        onMessageReceived: (JavascriptMessage message) async {
+                          final path = message.message;
+                          print("Location changed: " + path);
+                          if (path.startsWith("/join") ||
+                              path.startsWith("/login")) {
+                            setState(() {
+                              _loggedIn = false;
+                            });
+                            await Navigator.pushReplacementNamed(context, "/",
+                                arguments: LoginPageArguments(true));
+                          }
+                        }),
+                    JavascriptChannel(
+                        name: 'WebViewLoginState',
+                        onMessageReceived: (JavascriptMessage message) async {
+                          setState(() {
+                            _loggedIn = message.message == "1";
+                          });
+                          print("Login state changed: " + message.message);
+                          if (_loggedIn) {
+                            await _webViewController
+                                ?.loadUrl(await getEverglotUrl());
+                          } else {
+                            await Navigator.pushReplacementNamed(context, "/",
+                                arguments: LoginPageArguments(true));
+                          }
+                        })
+                  ]),
+                  onWebViewCreated: (WebViewController controller) {
+                    _webViewController = controller;
+                    print("Web view created");
+                  },
+                  onPageFinished: (String page) async {
+                    print("Page finished: " + page);
+                    if (page.startsWith(await getEverglotUrl(path: "/login"))) {
+                      setState(() {
+                        _loggedIn = false;
+                      });
+                      _tryLogin();
+                    }
+                    _webViewController?.evaluateJavascript("""
+            if (!window.locationChangeListenersInitialized) {
+              history.pushState = ( f => function pushState(){
+                  var ret = f.apply(this, arguments);
+                  window.dispatchEvent(new Event('pushstate'));
+                  window.dispatchEvent(new Event('locationchange'));
+                  return ret;
+              })(history.pushState);
+
+              history.replaceState = ( f => function replaceState(){
+                  var ret = f.apply(this, arguments);
+                  window.dispatchEvent(new Event('replacestate'));
+                  window.dispatchEvent(new Event('locationchange'));
+                  return ret;
+              })(history.replaceState);
+
+              window.addEventListener('popstate',()=>{
+                  window.dispatchEvent(new Event('locationchange'))
               });
-              _tryLogin();
+
+              window.addEventListener("locationchange", function() {
+                  WebViewLocationChange.postMessage(window.location.pathname)
+              });
+              window.locationChangeListenersInitialized = true;
             }
-            _webViewController?.evaluateJavascript("""
-        if (!window.locationChangeListenersInitialized) {
-          history.pushState = ( f => function pushState(){
-              var ret = f.apply(this, arguments);
-              window.dispatchEvent(new Event('pushstate'));
-              window.dispatchEvent(new Event('locationchange'));
-              return ret;
-          })(history.pushState);
-
-          history.replaceState = ( f => function replaceState(){
-              var ret = f.apply(this, arguments);
-              window.dispatchEvent(new Event('replacestate'));
-              window.dispatchEvent(new Event('locationchange'));
-              return ret;
-          })(history.replaceState);
-
-          window.addEventListener('popstate',()=>{
-              window.dispatchEvent(new Event('locationchange'))
-          });
-
-          window.addEventListener("locationchange", function() {
-              WebViewLocationChange.postMessage(window.location.pathname)
-          });
-          window.locationChangeListenersInitialized = true;
-        }
-        """);
-          },
-          userAgent: _getWebviewUserAgent(),
-          gestureNavigationEnabled: true,
-        ));
+            """);
+                  },
+                  userAgent: _getWebviewUserAgent(),
+                  gestureNavigationEnabled: true,
+                ));
+          }
+          return Scaffold();
+        });
   }
 
   String _getWebviewUserAgent() {

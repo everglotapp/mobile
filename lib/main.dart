@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
 import 'package:everglot/utils/notifications.dart';
+import 'package:everglot/state/messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   // Do not add anything before the below line.
@@ -47,49 +49,55 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
+  final _messaging = Messaging();
+  late final Future<FirebaseApp> _initialization =
+      Firebase.initializeApp().then((app) async {
+    final token = await getFcmToken();
+    _messaging.fcmToken = token;
+    await listenForeground();
+    return app;
+  });
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        // Initialize FlutterFire:
-        future: _initialization,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            print("Snapshot error");
-            return ErrorPage();
-          }
+    return ChangeNotifierProvider.value(
+        value: _messaging,
+        child: FutureBuilder(
+            // Initialize FlutterFire:
+            future: _initialization,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                print("Snapshot error");
+                return ErrorPage();
+              }
 
-          if (snapshot.connectionState == ConnectionState.done) {
-            print("Loaded app successfully");
+              if (snapshot.connectionState == ConnectionState.done) {
+                print("Loaded app successfully");
 
-            getFcmToken();
-            listenForeground();
+                return MaterialApp(
+                    title: 'Everglot',
+                    theme: ThemeData(
+                      // This is the theme of your application.
+                      //
+                      // Try running your application with "flutter run". You'll see the
+                      // application has a blue toolbar. Then, without quitting the app, try
+                      // changing the primarySwatch below to Colors.green and then invoke
+                      // "hot reload" (press "r" in the console where you ran "flutter run",
+                      // or simply save your changes to "hot reload" in a Flutter IDE).
+                      // Notice that the counter didn't reset back to zero; the application
+                      // is not restarted.
+                      primarySwatch: primary,
+                      fontFamily: "Noto",
+                    ),
+                    routes: {
+                      "/": (_) => LoginPage(),
+                      "/webapp": (_) => new WebAppContainer(),
+                    });
+              }
 
-            return MaterialApp(
-                title: 'Everglot',
-                theme: ThemeData(
-                  // This is the theme of your application.
-                  //
-                  // Try running your application with "flutter run". You'll see the
-                  // application has a blue toolbar. Then, without quitting the app, try
-                  // changing the primarySwatch below to Colors.green and then invoke
-                  // "hot reload" (press "r" in the console where you ran "flutter run",
-                  // or simply save your changes to "hot reload" in a Flutter IDE).
-                  // Notice that the counter didn't reset back to zero; the application
-                  // is not restarted.
-                  primarySwatch: primary,
-                  fontFamily: "Noto",
-                ),
-                routes: {
-                  "/": (_) => new LoginPage(),
-                  "/webapp": (_) => new WebAppContainer(),
-                });
-          }
-
-          print("Loading FirebaseApp …");
-          return SplashScreen();
-        });
+              print("Loading FirebaseApp …");
+              return SplashScreen();
+            }));
   }
 }
 
