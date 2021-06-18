@@ -25,6 +25,18 @@ String _getGoogleClientId() {
   return GOOGLE_CLIENT_ID_WEB;
 }
 
+Future<http.Response> _tryLogin(String idToken) async {
+  final loginUrl = await getEverglotUrl(path: "/login");
+  return http.post(Uri.parse(loginUrl),
+      body: jsonEncode({
+        "method": EVERGLOT_AUTH_METHOD_GOOGLE,
+        "idToken": idToken,
+      }),
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+      });
+}
+
 class LoginPageArguments {
   bool signedOut = false;
 
@@ -64,15 +76,8 @@ class LoginPageState extends State<LoginPage> {
       final authentication = await account.authentication;
       if (authentication.idToken != null) {
         if (_messaging != null && _messaging!.fcmToken != null) {
-          final loginUrl = await getEverglotUrl(path: "/login");
-          http.post(Uri.parse(loginUrl),
-              body: jsonEncode({
-                "method": EVERGLOT_AUTH_METHOD_GOOGLE,
-                "idToken": authentication.idToken,
-              }),
-              headers: {
-                HttpHeaders.contentTypeHeader: 'application/json',
-              }).then((http.Response response) async {
+          _tryLogin(authentication.idToken!)
+              .then((http.Response response) async {
             final int statusCode = response.statusCode;
 
             if (statusCode == 200) {
@@ -92,10 +97,17 @@ class LoginPageState extends State<LoginPage> {
                   print("Registering FCM token with Everglot failed: " +
                       response.body);
                 }
+              }).onError((error, stackTrace) {
+                print('FCM token registration request produced an error');
+                return Future.value();
               });
+              ;
             } else {
               print("Signing into Everglot failed: " + response.body);
             }
+          }).onError((error, stackTrace) {
+            print('Login request produced an error');
+            return Future.value();
           });
         }
         await Navigator.pushReplacementNamed(context, "/webapp",
