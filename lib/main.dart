@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
 import 'package:everglot/utils/notifications.dart';
@@ -11,6 +13,10 @@ void main() {
   // Do not add anything before the below line.
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+  LicenseRegistry.addLicense(() async* {
+    final license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
+  });
   runApp(App());
 }
 
