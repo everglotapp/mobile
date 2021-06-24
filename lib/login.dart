@@ -13,6 +13,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:email_validator/email_validator.dart';
 
 String _getGoogleClientId() {
   // Causes Platform exception 10
@@ -61,6 +62,9 @@ class LoginPageState extends State<LoginPage> {
   );
   Messaging? _messaging;
   bool _passwordHidden = true;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   @override
   void initState() {
@@ -75,6 +79,8 @@ class LoginPageState extends State<LoginPage> {
   void dispose() {
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -122,7 +128,7 @@ class LoginPageState extends State<LoginPage> {
           });
         }
         await Navigator.pushReplacementNamed(context, "/webapp",
-            arguments: WebAppArguments(authentication.idToken as String));
+            arguments: GoogleSignInArguments(authentication.idToken as String));
       }
     }
   }
@@ -150,6 +156,15 @@ class LoginPageState extends State<LoginPage> {
   }
 
   // Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
+
+  Future<void> _handleEmailSignIn() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    await Navigator.pushReplacementNamed(context, "/webapp",
+        arguments: EmailSignInArguments(
+            _emailController.text, _passwordController.text));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -186,11 +201,13 @@ class LoginPageState extends State<LoginPage> {
                                 fontSize: 18, fontWeight: FontWeight.w600)),
                       ])),
                   Form(
+                      key: _formKey,
                       child: Container(
                           margin:
                               EdgeInsetsDirectional.only(start: 16, end: 16),
                           child: Column(children: [
                             TextFormField(
+                              controller: _emailController,
                               decoration: InputDecoration(
                                   border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(32)),
@@ -200,9 +217,15 @@ class LoginPageState extends State<LoginPage> {
                                   contentPadding: EdgeInsetsDirectional.only(
                                       start: 18, end: 18, top: 4, bottom: 4),
                                   labelText: 'Email'),
+                              validator: (value) => value == null
+                                  ? "Please enter an email"
+                                  : EmailValidator.validate(value)
+                                      ? null
+                                      : "Please enter a valid email",
                             ),
                             Container(height: 4),
                             TextFormField(
+                              controller: _passwordController,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(32)),
@@ -224,11 +247,15 @@ class LoginPageState extends State<LoginPage> {
                                 ),
                               ),
                               obscureText: _passwordHidden,
+                              validator: (value) =>
+                                  (value == null || value.isEmpty)
+                                      ? "Please enter a password"
+                                      : null,
                             ),
                             SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                    onPressed: () {},
+                                    onPressed: _handleEmailSignIn,
                                     child: Text("Login",
                                         style: GoogleFonts.poppins(
                                             fontSize: 18, color: Colors.white)),

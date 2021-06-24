@@ -1,13 +1,31 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:everglot/constants.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/utils/webapp.dart';
+import 'package:everglot/utils/webapp_js.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-class WebAppArguments {
+abstract class WebAppArguments {
+  late final SignInMethod method;
+}
+
+enum SignInMethod { Google, Email }
+
+class GoogleSignInArguments extends WebAppArguments {
+  final SignInMethod method = SignInMethod.Google;
   final String idToken;
 
-  WebAppArguments(this.idToken);
+  GoogleSignInArguments(this.idToken);
+}
+
+class EmailSignInArguments extends WebAppArguments {
+  final SignInMethod method = SignInMethod.Email;
+  final String email;
+  final String password;
+
+  EmailSignInArguments(this.email, this.password);
 }
 
 class WebAppContainer extends StatefulWidget {
@@ -19,9 +37,6 @@ class WebAppState extends State<WebAppContainer> {
   bool _loggedIn = false;
   WebViewController? _webViewController;
   final Future<String> _initialization = getEverglotUrl();
-  static const hidePageContentsId = "EVERGLOT_HIDE_PAGE_CONTENTS_ID";
-  static const hidePageContentsHtml =
-      """<style id="$hidePageContentsId">body {display:none;}</style>""";
 
   @override
   void initState() {
@@ -33,8 +48,20 @@ class WebAppState extends State<WebAppContainer> {
   }
 
   Future<void> _tryLogin() async {
-    final args = ModalRoute.of(context)!.settings.arguments as WebAppArguments;
-    final token = args.idToken;
+    WebAppArguments args =
+        ModalRoute.of(context)!.settings.arguments as WebAppArguments;
+    Map<String, String> body = {};
+    if (args.method == SignInMethod.Google) {
+      args = args as GoogleSignInArguments;
+      body["method"] = EVERGLOT_AUTH_METHOD_GOOGLE;
+      body["idToken"] = args.idToken;
+    } else if (args.method == SignInMethod.Email) {
+      args = args as EmailSignInArguments;
+      body["method"] = EVERGLOT_AUTH_METHOD_EMAIL;
+      body["email"] = args.email;
+      body["password"] = args.password;
+    }
+    final String jsonBody = json.encode(body);
     await _webViewController?.evaluateJavascript("""
       console.log("Trying to log in");
       var res = fetch("/login", {
@@ -43,10 +70,7 @@ class WebAppState extends State<WebAppContainer> {
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          method: "google",
-          idToken: "$token"
-        }),
+        body: '$jsonBody',
         redirect: "follow"
       }).then(function (response) {
         if (response && response.redirected && response.url && response.url.length) {
@@ -59,6 +83,8 @@ class WebAppState extends State<WebAppContainer> {
           console.log(JSON.stringify(res));
           if (res && res.success) {
             WebViewLoginState.postMessage("1");
+          } else {
+            WebViewLoginState.postMessage("0");
           }
         }).catch(function (e) {
           console.log("Failed to parse response as JSON", res, e);
@@ -71,27 +97,6 @@ class WebAppState extends State<WebAppContainer> {
     """);
   }
 
-  static const tryHidePageContentsJsFunc = """
-    (function() {
-      function doHide() {
-        var hider = document.getElementById('$hidePageContentsId');
-        if (hider) {
-          console.log("Page contents already hidden, cannot hide them");
-          return false;
-        }
-        console.log("Hiding page contents");
-        document.write('$hidePageContentsHtml');
-      }
-      if (document.readyState === "complete") {
-        doHide();
-      } else {
-        document.addEventListener("DOMContentLoaded", function(_event) {
-          doHide();
-        }, { once: true });
-      }
-      return true;
-    })
-  """;
   Future<bool> _tryHidePageContents() async {
     print("Trying to hide page contents …");
     return (await _webViewController
@@ -99,27 +104,6 @@ class WebAppState extends State<WebAppContainer> {
         "true";
   }
 
-  static const tryShowPageContentsJsFunc = """
-    (function() {
-      function doShow() {
-        var hider = document.getElementById('$hidePageContentsId');
-        if (!hider) {
-          console.log("Page contents are not hidden, cannot show them again");
-          return false;
-        }
-        console.log("Page contents are hidden, showing them again");
-        hider.remove();
-      }
-      if (document.readyState === "complete") {
-        doShow();
-      } else {
-        document.addEventListener("DOMContentLoaded", function(_event) {
-          doShow();
-        }, { once: true });
-      }
-      return true;
-    })
-  """;
   Future<bool> _tryShowPageContents() async {
     print("Trying to show page contents …");
     return (await _webViewController
@@ -202,31 +186,8 @@ class WebAppState extends State<WebAppContainer> {
                       await _tryShowPageContents();
                     }
                     _webViewController?.evaluateJavascript("""
-            if (!window.locationChangeListenersInitialized) {
-              history.pushState = ( f => function pushState(){
-                  var ret = f.apply(this, arguments);
-                  window.dispatchEvent(new Event('pushstate'));
-                  window.dispatchEvent(new Event('locationchange'));
-                  return ret;
-              })(history.pushState);
-
-              history.replaceState = ( f => function replaceState(){
-                  var ret = f.apply(this, arguments);
-                  window.dispatchEvent(new Event('replacestate'));
-                  window.dispatchEvent(new Event('locationchange'));
-                  return ret;
-              })(history.replaceState);
-
-              window.addEventListener('popstate',()=>{
-                  window.dispatchEvent(new Event('locationchange'))
-              });
-
-              window.addEventListener("locationchange", function() {
-                  WebViewLocationChange.postMessage(window.location.pathname)
-              });
-              window.locationChangeListenersInitialized = true;
-            }
-            """);
+                      $initializeLocationChangeListenersJsFunc();
+                    """);
                   },
                   userAgent: _getWebviewUserAgent(),
                   gestureNavigationEnabled: true,
