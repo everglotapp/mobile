@@ -11,6 +11,7 @@ import 'package:auth_buttons/auth_buttons.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 
 String _getGoogleClientId() {
   // Causes Platform exception 10
@@ -163,12 +164,12 @@ class LoginPageState extends State<LoginPage> {
               child: Column(children: [
                 Container(
                     child: Text("Everglot",
-                        style: TextStyle(
-                            fontSize: 28, fontWeight: FontWeight.bold)),
-                    margin: EdgeInsetsDirectional.only(bottom: 8)),
+                        style: GoogleFonts.poppins(
+                            fontSize: 28, fontWeight: FontWeight.w600)),
+                    margin: EdgeInsetsDirectional.only(bottom: 4)),
                 Text("Learn Together",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: GoogleFonts.poppins(
+                        fontSize: 18, fontWeight: FontWeight.w600)),
               ])),
           Form(
               child: Container(
@@ -178,6 +179,7 @@ class LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(32)),
+                          labelStyle: GoogleFonts.poppins(),
                           fillColor: Colors.grey[100],
                           filled: true,
                           contentPadding: EdgeInsetsDirectional.only(
@@ -189,6 +191,7 @@ class LoginPageState extends State<LoginPage> {
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(32)),
+                        labelStyle: GoogleFonts.poppins(),
                         fillColor: Colors.grey[100],
                         filled: true,
                         contentPadding: EdgeInsetsDirectional.only(
@@ -201,8 +204,8 @@ class LoginPageState extends State<LoginPage> {
                             });
                           },
                           child: Text(_passwordHidden ? "Show" : "Hide",
-                              style: TextStyle(
-                                  color: primary, fontWeight: FontWeight.bold)),
+                              style: GoogleFonts.poppins(
+                                  color: primary, fontSize: 14)),
                         ),
                       ),
                       obscureText: _passwordHidden,
@@ -211,8 +214,12 @@ class LoginPageState extends State<LoginPage> {
                         width: double.infinity,
                         child: ElevatedButton(
                             onPressed: () {},
-                            child: Text("Login"),
+                            child: Text("Login",
+                                style: GoogleFonts.poppins(
+                                    fontSize: 18, color: Colors.white)),
                             style: ElevatedButton.styleFrom(
+                                padding: EdgeInsetsDirectional.only(
+                                    top: 6, bottom: 6),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(32)))))
                   ]))),
