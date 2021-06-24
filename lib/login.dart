@@ -101,7 +101,6 @@ class LoginPageState extends State<LoginPage> {
                 print('FCM token registration request produced an error');
                 return Future.value();
               });
-              ;
             } else {
               print("Signing into Everglot failed: " + response.body);
             }

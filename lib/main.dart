@@ -113,7 +113,7 @@ class SplashScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                  new Text("Everglot",
+                  Text("Everglot",
                       style: TextStyle(
                           color: primary,
                           fontFamily: "Noto",
@@ -135,7 +135,7 @@ class ErrorPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                  new Text("Error loading Everglot. Please restart the app.",
+                  Text("Error loading Everglot. Please restart the app.",
                       style: TextStyle(
                           color: Colors.white,
                           fontFamily: "Noto",
