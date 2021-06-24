@@ -1,23 +1,22 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
 import 'package:everglot/utils/notifications.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   // Do not add anything before the below line.
   WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarColor: primary,
-  ));
-  SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
-
   FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
+  LicenseRegistry.addLicense(() async* {
+    final license = await rootBundle.loadString('assets/google_fonts/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
+  });
   runApp(App());
 }
 
@@ -113,7 +112,7 @@ class SplashScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                  new Text("Everglot",
+                  Text("Everglot",
                       style: TextStyle(
                           color: primary,
                           fontFamily: "Noto",
@@ -135,7 +134,7 @@ class ErrorPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                  new Text("Error loading Everglot. Please restart the app.",
+                  Text("Error loading Everglot. Please restart the app.",
                       style: TextStyle(
                           color: Colors.white,
                           fontFamily: "Noto",

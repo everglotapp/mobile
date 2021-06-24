@@ -35,6 +35,8 @@ dependencies:
   device_info_plus: ^2.0.1
   provider: ^5.0.0
   http: ^0.13.3
+  google_fonts: ^2.1.0
+  email_validator: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -80,3 +82,8 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/google_fonts/Poppins-Regular.ttf
+        - asset: assets/google_fonts/Poppins-SemiBold.ttf
