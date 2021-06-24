@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:everglot/constants.dart';
+import 'package:everglot/main.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/webapp.dart';
 import 'package:everglot/webapp.dart';
@@ -57,6 +58,7 @@ class LoginPageState extends State<LoginPage> {
     ],
   );
   Messaging? _messaging;
+  bool _passwordHidden = true;
 
   @override
   void initState() {
@@ -143,23 +145,83 @@ class LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-            appBar: AppBar(
-              title: Text('Login to Everglot',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
             body: Container(
                 child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        GoogleAuthButton(
-                          onPressed: _handleGoogleSignIn,
-                          darkMode: false, // if true second example
+          Container(
+              height: 96,
+              width: 96,
+              decoration: BoxDecoration(
+                  color: primary, borderRadius: BorderRadius.circular(96)),
+              child: Center(
+                  child: Text("EVG",
+                      style: TextStyle(color: Colors.white, fontSize: 24)))),
+          Container(
+              margin: EdgeInsetsDirectional.only(start: 16, end: 16),
+              padding: EdgeInsetsDirectional.only(top: 24, bottom: 24),
+              child: Column(children: [
+                Container(
+                    child: Text("Everglot",
+                        style: TextStyle(
+                            fontSize: 28, fontWeight: FontWeight.bold)),
+                    margin: EdgeInsetsDirectional.only(bottom: 8)),
+                Text("Learn Together",
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ])),
+          Form(
+              child: Container(
+                  margin: EdgeInsetsDirectional.only(start: 16, end: 16),
+                  child: Column(children: [
+                    TextFormField(
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(32)),
+                          fillColor: Colors.grey[100],
+                          filled: true,
+                          contentPadding: EdgeInsetsDirectional.only(
+                              start: 18, end: 18, top: 4, bottom: 4),
+                          labelText: 'Email'),
+                    ),
+                    Container(height: 4),
+                    TextFormField(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(32)),
+                        fillColor: Colors.grey[100],
+                        filled: true,
+                        contentPadding: EdgeInsetsDirectional.only(
+                            start: 18, end: 18, top: 4, bottom: 4),
+                        labelText: 'Password',
+                        suffix: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _passwordHidden = !_passwordHidden;
+                            });
+                          },
+                          child: Text(_passwordHidden ? "Show" : "Hide",
+                              style: TextStyle(
+                                  color: primary, fontWeight: FontWeight.bold)),
                         ),
-                      ])
-                ]))));
+                      ),
+                      obscureText: _passwordHidden,
+                    ),
+                    SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                            onPressed: () {},
+                            child: Text("Login"),
+                            style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(32)))))
+                  ]))),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+            GoogleAuthButton(
+              onPressed: _handleGoogleSignIn,
+              darkMode: false,
+            ),
+          ])
+        ]))));
   }
 }
