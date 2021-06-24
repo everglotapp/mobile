@@ -5,18 +5,11 @@ import 'package:everglot/utils/notifications.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   // Do not add anything before the below line.
   WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarColor: primary,
-  ));
-  SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
-
   FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
   runApp(App());
 }

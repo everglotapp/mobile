@@ -140,7 +140,8 @@ class WebAppState extends State<WebAppContainer> {
             final everglotLoginUrl = everglotRootUrl + "login";
             return Scaffold(
                 resizeToAvoidBottomInset: true,
-                body: WebView(
+                body: SafeArea(
+                    child: WebView(
                   initialUrl: everglotRootUrl,
                   javascriptMode: JavascriptMode.unrestricted,
                   javascriptChannels: Set.from([
@@ -229,7 +230,7 @@ class WebAppState extends State<WebAppContainer> {
                   },
                   userAgent: _getWebviewUserAgent(),
                   gestureNavigationEnabled: true,
-                ));
+                )));
           }
           return Scaffold();
         });
