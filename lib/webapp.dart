@@ -107,7 +107,6 @@ class WebAppState extends State<WebAppContainer> {
           if (snapshot.connectionState == ConnectionState.done) {
             final everglotRootUrl = snapshot.data as String;
             final everglotPlaceholderUrl = everglotRootUrl + "placeholder";
-            final everglotLoginUrl = everglotRootUrl + "login";
             return Scaffold(
                 resizeToAvoidBottomInset: true,
                 body: SafeArea(
