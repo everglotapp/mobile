@@ -1,11 +1,9 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:everglot/constants.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/utils/webapp.dart';
-import 'package:everglot/utils/webapp_js.dart';
 import 'package:flutter/material.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 abstract class WebAppArguments {
   late final SignInMethod method;
@@ -34,66 +32,42 @@ class WebAppContainer extends StatefulWidget {
 }
 
 class WebAppState extends State<WebAppContainer> {
-  bool _loggedIn = false;
-  WebViewController? _webViewController;
   final Future<String> _initialization = getEverglotUrl();
+  final GlobalKey webViewKey = GlobalKey();
+  InAppWebViewController? webViewController;
+  InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
+      crossPlatform: InAppWebViewOptions(
+        useShouldOverrideUrlLoading: true,
+        mediaPlaybackRequiresUserGesture: false,
+      ),
+      android: AndroidInAppWebViewOptions(
+        useHybridComposition: true,
+      ),
+      ios: IOSInAppWebViewOptions(
+        allowsInlineMediaPlayback: true,
+      ));
+  late PullToRefreshController pullToRefreshController;
+  String url = "";
+  double progress = 0;
+  final urlController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Enable hybrid composition.
-    if (Platform.isAndroid) {
-      WebView.platform = SurfaceAndroidWebView();
-    }
-  }
 
-  Future<void> _tryLogin() async {
-    WebAppArguments args =
-        ModalRoute.of(context)!.settings.arguments as WebAppArguments;
-    Map<String, String> body = {};
-    if (args.method == SignInMethod.Google) {
-      args = args as GoogleSignInArguments;
-      body["method"] = EVERGLOT_AUTH_METHOD_GOOGLE;
-      body["idToken"] = args.idToken;
-    } else if (args.method == SignInMethod.Email) {
-      args = args as EmailSignInArguments;
-      body["method"] = EVERGLOT_AUTH_METHOD_EMAIL;
-      body["email"] = args.email;
-      body["password"] = args.password;
-    }
-    final String jsonBody = json.encode(body);
-    await _webViewController?.evaluateJavascript("""
-      console.log("Trying to log in");
-      var res = fetch("/login", {
-        method: "post",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: '$jsonBody',
-        redirect: "follow"
-      }).then(function (response) {
-        if (response && response.redirected && response.url && response.url.length) {
-          console.log("Login HTTP request succeeded with redirect to "+ response.url);
-          history.replaceState(null, '', response.url);
-          return;
+    pullToRefreshController = PullToRefreshController(
+      options: PullToRefreshOptions(
+        color: Colors.blue,
+      ),
+      onRefresh: () async {
+        if (Platform.isAndroid) {
+          webViewController?.reload();
+        } else if (Platform.isIOS) {
+          webViewController?.loadUrl(
+              urlRequest: URLRequest(url: await webViewController?.getUrl()));
         }
-        response.json().then(function (res) {
-          console.log(JSON.stringify(res));
-          if (res && res.success) {
-            WebViewLoginState.postMessage("1");
-          } else {
-            WebViewLoginState.postMessage("0");
-          }
-        }).catch(function (e) {
-          console.log("Failed to parse response as JSON", res, e);
-            WebViewLoginState.postMessage("0");
-        });
-      }).catch(function(e) {
-        console.log("Login HTTP request failed", e);
-        WebViewLoginState.postMessage("0");
-      });
-    """);
+      },
+    );
   }
 
   @override
@@ -106,64 +80,145 @@ class WebAppState extends State<WebAppContainer> {
           }
           if (snapshot.connectionState == ConnectionState.done) {
             final everglotRootUrl = snapshot.data as String;
-            final everglotPlaceholderUrl = everglotRootUrl + "placeholder";
             return Scaffold(
                 resizeToAvoidBottomInset: true,
                 body: SafeArea(
-                    child: WebView(
-                  initialUrl: everglotPlaceholderUrl,
-                  javascriptMode: JavascriptMode.unrestricted,
-                  javascriptChannels: Set.from([
-                    JavascriptChannel(
-                        name: 'WebViewLocationChange',
-                        onMessageReceived: (JavascriptMessage message) async {
-                          final path = message.message;
-                          print("Location changed: " + path);
-                          if (path.startsWith("/join") ||
-                              path.startsWith("/login")) {
-                            print(
-                                "Logged out state detected, switching to login screen");
-                            setState(() {
-                              _loggedIn = false;
-                            });
-                            await Navigator.pushReplacementNamed(context, "/",
-                                arguments: LoginPageArguments(true));
-                          }
-                        }),
-                    JavascriptChannel(
-                        name: 'WebViewLoginState',
-                        onMessageReceived: (JavascriptMessage message) async {
-                          setState(() {
-                            _loggedIn = message.message == "1";
-                          });
-                          print("Login state changed: " + message.message);
-                          if (_loggedIn) {
-                            await _webViewController?.loadUrl(everglotRootUrl);
-                          } else {
-                            await Navigator.pushReplacementNamed(context, "/",
-                                arguments: LoginPageArguments(true));
-                          }
-                        })
-                  ]),
-                  onWebViewCreated: (WebViewController controller) async {
-                    _webViewController = controller;
-                    print("Web view created");
-                  },
-                  onPageFinished: (String page) async {
-                    print("Page finished: " + page);
-                    if (page.startsWith(everglotPlaceholderUrl)) {
+                  child: InAppWebView(
+                    key: webViewKey,
+                    initialUrlRequest:
+                        URLRequest(url: Uri.parse(everglotRootUrl)),
+                    initialOptions: options,
+                    pullToRefreshController: pullToRefreshController,
+                    onWebViewCreated: (controller) {
+                      webViewController = controller;
+                    },
+                    onLoadStart: (controller, url) {
                       setState(() {
-                        _loggedIn = false;
+                        this.url = url.toString();
+                        urlController.text = this.url;
                       });
-                      await _tryLogin();
-                    }
-                    _webViewController?.evaluateJavascript("""
-                      $initializeLocationChangeListenersJsFunc();
-                    """);
-                  },
-                  userAgent: _getWebviewUserAgent(),
-                  gestureNavigationEnabled: true,
-                )));
+                    },
+                    androidOnPermissionRequest:
+                        (controller, origin, resources) async {
+                      return PermissionRequestResponse(
+                          resources: resources,
+                          action: PermissionRequestResponseAction.GRANT);
+                    },
+                    shouldOverrideUrlLoading:
+                        (controller, navigationAction) async {
+                      var uri = navigationAction.request.url!;
+
+                      if (![
+                        "http",
+                        "https",
+                      ].contains(uri.scheme)) {
+                        if (await canLaunch(url)) {
+                          // Launch the App
+                          await launch(
+                            url,
+                          );
+                          // and cancel the request
+                          return NavigationActionPolicy.CANCEL;
+                        }
+                      }
+                      // TODO: Prevent non-Everglot URLs
+
+                      return NavigationActionPolicy.ALLOW;
+                    },
+                    onLoadStop: (controller, url) async {
+                      pullToRefreshController.endRefreshing();
+                      setState(() {
+                        this.url = url.toString();
+                        urlController.text = this.url;
+                      });
+                    },
+                    onLoadError: (controller, url, code, message) {
+                      pullToRefreshController.endRefreshing();
+                    },
+                    onProgressChanged: (controller, progress) {
+                      if (progress == 100) {
+                        pullToRefreshController.endRefreshing();
+                      }
+                      setState(() {
+                        urlController.text = this.url;
+                      });
+                    },
+                    onUpdateVisitedHistory:
+                        (controller, url, androidIsReload) async {
+                      setState(() {
+                        this.url = url.toString();
+                        urlController.text = this.url;
+                      });
+                      if (this.url.startsWith(
+                              await getEverglotUrl(path: "/join")) ||
+                          this.url.startsWith(
+                              await getEverglotUrl(path: "/login"))) {
+                        print(
+                            "Logged out state detected, switching to login screen");
+                        await Navigator.pushReplacementNamed(context, "/",
+                            arguments: LoginPageArguments(true));
+                      }
+                    },
+                    onConsoleMessage: (controller, consoleMessage) {
+                      print(consoleMessage);
+                    },
+                  ),
+                ));
+
+            //     child: WebView(
+            //   initialUrl: everglotPlaceholderUrl,
+            //   javascriptMode: JavascriptMode.unrestricted,
+            //   javascriptChannels: Set.from([
+            //     JavascriptChannel(
+            //         name: 'WebViewLocationChange',
+            //         onMessageReceived: (JavascriptMessage message) async {
+            //           final path = message.message;
+            //           print("Location changed: " + path);
+            //           if (path.startsWith("/join") ||
+            //               path.startsWith("/login")) {
+            //             print(
+            //                 "Logged out state detected, switching to login screen");
+            //             setState(() {
+            //               _loggedIn = false;
+            //             });
+            //             await Navigator.pushReplacementNamed(context, "/",
+            //                 arguments: LoginPageArguments(true));
+            //           }
+            //         }),
+            //     JavascriptChannel(
+            //         name: 'WebViewLoginState',
+            //         onMessageReceived: (JavascriptMessage message) async {
+            //           setState(() {
+            //             _loggedIn = message.message == "1";
+            //           });
+            //           print("Login state changed: " + message.message);
+            //           if (_loggedIn) {
+            //             await _webViewController?.loadUrl(everglotRootUrl);
+            //           } else {
+            //             await Navigator.pushReplacementNamed(context, "/",
+            //                 arguments: LoginPageArguments(true));
+            //           }
+            //         })
+            //   ]),
+            //   onWebViewCreated: (WebViewController controller) async {
+            //     _webViewController = controller;
+            //     print("Web view created");
+            //   },
+            //   onPageFinished: (String page) async {
+            //     print("Page finished: " + page);
+            //     if (page.startsWith(everglotPlaceholderUrl)) {
+            //       setState(() {
+            //         _loggedIn = false;
+            //       });
+            //       await _tryLogin();
+            //     }
+            //     _webViewController?.evaluateJavascript("""
+            //       $initializeLocationChangeListenersJsFunc();
+            //     """);
+            //   },
+            //   userAgent: _getWebviewUserAgent(),
+            //   gestureNavigationEnabled: true,
+            // )));
           }
           return Scaffold();
         });

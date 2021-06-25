@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +9,11 @@ import 'package:everglot/utils/notifications.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-void main() {
+void main() async {
   // Do not add anything before the below line.
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
@@ -18,6 +22,11 @@ void main() {
     yield LicenseEntryWithLineBreaks(['google_fonts'], license);
   });
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  if (Platform.isAndroid) {
+    await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
+  }
+  await Permission.camera.request();
+  await Permission.microphone.request();
   runApp(App());
 }
 
