@@ -136,13 +136,13 @@ class LoginPageState extends State<LoginPage> {
   Future<void> autoSignInOrOut() async {
     await Future.delayed(Duration.zero);
     final args = ModalRoute.of(context)!.settings.arguments;
-    if (args == null) {
-      _googleSignIn.signInSilently();
+    if (args != null && (args as LoginPageArguments).signedOut) {
+      _googleSignIn.signOut();
     } else {
-      if ((args as LoginPageArguments).signedOut) {
-        _googleSignIn.signOut();
-      } else {
-        _googleSignIn.signInSilently();
+      try {
+        await _googleSignIn.signInSilently();
+      } catch (error) {
+        print("Automatic silent Google sign in failed: " + error.toString());
       }
     }
   }
@@ -151,7 +151,7 @@ class LoginPageState extends State<LoginPage> {
     try {
       await _googleSignIn.signIn();
     } catch (error) {
-      print(error);
+      print("Google sign in failed: " + error.toString());
     }
   }
 
