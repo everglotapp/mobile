@@ -6,9 +6,12 @@ import 'package:everglot/main.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/webapp.dart';
 import 'package:everglot/webapp.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart'
+    show CookieManager;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -29,7 +32,7 @@ String _getGoogleClientId() {
   return GOOGLE_CLIENT_ID_WEB;
 }
 
-Future<http.Response> _tryLogin(String idToken) async {
+Future<http.Response> _tryGoogleLogin(String idToken) async {
   final loginUrl = await getEverglotUrl(path: "/login");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
@@ -39,6 +42,58 @@ Future<http.Response> _tryLogin(String idToken) async {
       headers: {
         HttpHeaders.contentTypeHeader: 'application/json',
       });
+}
+
+Future<http.Response> _tryEmailLogin(String email, String password) async {
+  final loginUrl = await getEverglotUrl(path: "/login");
+  return http.post(Uri.parse(loginUrl),
+      body: jsonEncode({
+        "method": EVERGLOT_AUTH_METHOD_EMAIL,
+        "email": email,
+        "password": password,
+      }),
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+      });
+}
+
+Future<void> _tryRegisterFcmToken(String fcmToken, String cookieHeader) async {
+  final fcmTokenRegistrationUrl =
+      await getEverglotUrl(path: "/users/fcm-token/register/" + fcmToken);
+  http.post(Uri.parse(fcmTokenRegistrationUrl), headers: {
+    HttpHeaders.cookieHeader: cookieHeader
+  }).then((http.Response response) {
+    final int statusCode = response.statusCode;
+
+    if (statusCode == 200) {
+      print("Successfully registered FCM token with Everglot!");
+    } else {
+      print("Registering FCM token with Everglot failed: " + response.body);
+    }
+  }).onError((error, stackTrace) {
+    print('FCM token registration request produced an error');
+    return Future.value();
+  });
+}
+
+Future<void> _registerSessionCookie(String cookieHeader, Uri url) async {
+  CookieManager cookieManager = CookieManager.instance();
+  // set the expiration date for the cookie in milliseconds
+  final defaultExpiryMs =
+      DateTime.now().add(Duration(days: 3)).millisecondsSinceEpoch;
+
+  final cookie = Cookie.fromSetCookieValue(cookieHeader);
+  await cookieManager.setCookie(
+    url: url,
+    path: cookie.path ?? "/",
+    name: cookie.name,
+    value: cookie.value,
+    domain: cookie.domain,
+    expiresDate: cookie.expires == null
+        ? defaultExpiryMs
+        : cookie.expires!.millisecondsSinceEpoch,
+    isSecure: !kDebugMode,
+  );
 }
 
 class LoginPageArguments {
@@ -65,6 +120,7 @@ class LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _feedback;
 
   @override
   void initState() {
@@ -91,37 +147,42 @@ class LoginPageState extends State<LoginPage> {
     if (account == null) {
       print("null account");
     } else {
+      // Successfully logged in via Google.
       final authentication = await account.authentication;
       if (authentication.idToken != null) {
         if (_messaging != null && _messaging!.fcmToken != null) {
-          _tryLogin(authentication.idToken!)
+          _tryGoogleLogin(authentication.idToken!)
               .then((http.Response response) async {
             final int statusCode = response.statusCode;
 
             if (statusCode == 200) {
-              print(
-                  "Signed in to Everglot. Will now try to register FCM token.");
-              final fcmTokenRegistrationUrl = await getEverglotUrl(
-                  path: "/users/fcm-token/register/" + _messaging!.fcmToken!);
-              http.post(Uri.parse(fcmTokenRegistrationUrl), headers: {
-                HttpHeaders.cookieHeader:
-                    response.headers[HttpHeaders.setCookieHeader] ?? ""
-              }).then((http.Response response) {
-                final int statusCode = response.statusCode;
-
-                if (statusCode == 200) {
-                  print("Successfully registered FCM token with Everglot!");
+              final jsonResponse = json.decode(response.body);
+              if (jsonResponse != null && jsonResponse["success"] == true) {
+                final cookieHeader =
+                    response.headers[HttpHeaders.setCookieHeader];
+                if (cookieHeader == null) {
+                  print("Something went wrong, cannot get session cookie.");
                 } else {
-                  print("Registering FCM token with Everglot failed: " +
-                      response.body);
+                  print(
+                      "Signed in to Everglot via Google. Will now try to register FCM token.");
+                  _tryRegisterFcmToken(_messaging!.fcmToken!, cookieHeader);
+                  _registerSessionCookie(cookieHeader, response.request!.url);
+                  await Navigator.pushReplacementNamed(context, "/webapp",
+                      arguments:
+                          GoogleSignInArguments(authentication.idToken!));
                 }
-              }).onError((error, stackTrace) {
-                print('FCM token registration request produced an error');
-                return Future.value();
-              });
-            } else {
-              print("Signing into Everglot failed: " + response.body);
+                return;
+              }
             }
+            final jsonResponse = json.decode(response.body);
+            if (jsonResponse != null &&
+                jsonResponse["success"] == false &&
+                jsonResponse["message"] != null) {
+              setState(() {
+                _feedback = jsonResponse["message"];
+              });
+            }
+            print("Signing into Everglot failed: " + response.body);
           }).onError((error, stackTrace) {
             print('Login request produced an error');
             return Future.value();
@@ -149,6 +210,9 @@ class LoginPageState extends State<LoginPage> {
 
   Future<void> _handleGoogleSignIn() async {
     try {
+      setState(() {
+        _feedback = null;
+      });
       await _googleSignIn.signIn();
     } catch (error) {
       print("Google sign in failed: " + error.toString());
@@ -158,12 +222,66 @@ class LoginPageState extends State<LoginPage> {
   // Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
 
   Future<void> _handleEmailSignIn() async {
+    setState(() {
+      _feedback = null;
+    });
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    await Navigator.pushReplacementNamed(context, "/webapp",
-        arguments: EmailSignInArguments(
-            _emailController.text, _passwordController.text));
+    final email = _emailController.text;
+    final password = _passwordController.text;
+    _tryEmailLogin(email, password).then((http.Response response) async {
+      final int statusCode = response.statusCode;
+
+      if (statusCode == 200) {
+        // If response.json.success login succeeded
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse != null && jsonResponse["success"] == true) {
+          final cookieHeader = response.headers[HttpHeaders.setCookieHeader];
+          if (cookieHeader == null) {
+            print("Something went wrong, cannot get session cookie.");
+          } else {
+            print(
+                "Successfully signed in to Everglot via email. Will now try to register FCM token.");
+            _tryRegisterFcmToken(_messaging!.fcmToken!,
+                response.headers[HttpHeaders.setCookieHeader] ?? "");
+            _registerSessionCookie(cookieHeader, response.request!.url);
+            await Navigator.pushReplacementNamed(context, "/webapp",
+                arguments: EmailSignInArguments(email, password));
+            return;
+          }
+        }
+      }
+      print("Signing into Everglot failed: " + response.body);
+      final jsonResponse = json.decode(response.body);
+      print(jsonResponse);
+      if (jsonResponse != null &&
+          jsonResponse["success"] == false &&
+          jsonResponse["message"] != null) {
+        setState(() {
+          _feedback = jsonResponse["message"];
+        });
+      }
+      // TODO: If 302, set initial URL to redirected URL
+
+      //  if (response && response.redirected && response.url && response.url.length) {
+      //     console.log("Login HTTP request succeeded with redirect to "+ response.url);
+      //     history.replaceState(null, '', response.url);
+      //     return;
+      //   }
+      //   response.json().then(function (res) {
+      //     console.log(JSON.stringify(res));
+      //     if (res && res.success) {
+      //       WebViewLoginState.postMessage("1");
+      //     } else {
+      //       WebViewLoginState.postMessage("0");
+      //     }
+      //   }).catch(function (e) {
+      //     console.log("Failed to parse response as JSON", res, e);
+      //       WebViewLoginState.postMessage("0");
+      //   });
+    });
+    // TODO: Only push this upon success
   }
 
   @override
@@ -244,6 +362,7 @@ class LoginPageState extends State<LoginPage> {
                                               top: 4,
                                               bottom: 4),
                                       labelText: 'Email'),
+                                  keyboardType: TextInputType.emailAddress,
                                   validator: (value) =>
                                       (value == null || value.isEmpty)
                                           ? "Please enter an email"
@@ -277,11 +396,24 @@ class LoginPageState extends State<LoginPage> {
                                     ),
                                   ),
                                   obscureText: _passwordHidden,
-                                  validator: (value) =>
-                                      (value == null || value.isEmpty)
-                                          ? "Please enter a password"
-                                          : null,
+                                  validator: (value) => (value == null ||
+                                          value.isEmpty)
+                                      ? "Please enter a password"
+                                      : (value.length < 8
+                                          ? "Passwords must be at least 8 characters long"
+                                          : null),
                                 ),
+                                (_feedback == null || _feedback!.length == 0)
+                                    ? SizedBox.shrink()
+                                    : Container(
+                                        padding: EdgeInsetsDirectional.only(
+                                            top: 12, bottom: 12),
+                                        child: Center(
+                                            child: Text(_feedback!,
+                                                style: TextStyle(
+                                                    color: Colors.red[300],
+                                                    fontWeight:
+                                                        FontWeight.bold)))),
                                 SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
@@ -298,16 +430,19 @@ class LoginPageState extends State<LoginPage> {
                                                     BorderRadius.circular(
                                                         32)))))
                               ])))),
-                  Flexible(
-                      flex: 1,
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            GoogleAuthButton(
-                              onPressed: _handleGoogleSignIn,
-                              darkMode: false,
-                            ),
-                          ]))
+                  keyboardVisible
+                      ? SizedBox.shrink()
+                      : Flexible(
+                          flex: 4,
+                          fit: FlexFit.loose,
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                GoogleAuthButton(
+                                  onPressed: _handleGoogleSignIn,
+                                  darkMode: false,
+                                ),
+                              ]))
                 ]))));
   }
 }

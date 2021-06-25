@@ -59,5 +59,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Everglot wants to access your microphone to let you join calls.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Everglot wants to access your camera to let your upload photos.</string>
 </dict>
 </plist>
