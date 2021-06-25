@@ -168,6 +168,7 @@ class LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardVisible = MediaQuery.of(context).viewInsets.bottom != 0;
     return SafeArea(
         child: Scaffold(
             resizeToAvoidBottomInset: true,
@@ -175,105 +176,138 @@ class LoginPageState extends State<LoginPage> {
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                  Expanded(
-                      flex: 0,
+                  keyboardVisible
+                      ? SizedBox.shrink()
+                      : Flexible(
+                          flex: 2,
+                          fit: FlexFit.loose,
+                          child: Container(
+                              height: 96,
+                              width: 96,
+                              decoration: BoxDecoration(
+                                  color: primary,
+                                  borderRadius: BorderRadius.circular(96)),
+                              child: Center(
+                                  child: Text("EVG",
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24))))),
+                  Flexible(
+                      flex: 3,
+                      fit: FlexFit.loose,
                       child: Container(
-                          height: 96,
-                          width: 96,
-                          decoration: BoxDecoration(
-                              color: primary,
-                              borderRadius: BorderRadius.circular(96)),
-                          child: Center(
-                              child: Text("EVG",
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 24))))),
-                  Container(
-                      margin: EdgeInsetsDirectional.only(start: 16, end: 16),
-                      padding: EdgeInsetsDirectional.only(top: 24, bottom: 24),
-                      child: Column(children: [
-                        Container(
-                            child: Text("Everglot",
-                                style: GoogleFonts.poppins(
-                                    fontSize: 28, fontWeight: FontWeight.w600)),
-                            margin: EdgeInsetsDirectional.only(bottom: 4)),
-                        Text("Learn Together",
-                            style: GoogleFonts.poppins(
-                                fontSize: 18, fontWeight: FontWeight.w600)),
-                      ])),
-                  Form(
-                      key: _formKey,
-                      child: Container(
-                          margin:
-                              EdgeInsetsDirectional.only(start: 16, end: 16),
-                          child: Column(children: [
-                            TextFormField(
-                              controller: _emailController,
-                              decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(32)),
-                                  labelStyle: GoogleFonts.poppins(),
-                                  fillColor: Colors.grey[100],
-                                  filled: true,
-                                  contentPadding: EdgeInsetsDirectional.only(
-                                      start: 18, end: 18, top: 4, bottom: 4),
-                                  labelText: 'Email'),
-                              validator: (value) => value == null
-                                  ? "Please enter an email"
-                                  : EmailValidator.validate(value)
-                                      ? null
-                                      : "Please enter a valid email",
-                            ),
-                            Container(height: 4),
-                            TextFormField(
-                              controller: _passwordController,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(32)),
-                                labelStyle: GoogleFonts.poppins(),
-                                fillColor: Colors.grey[100],
-                                filled: true,
-                                contentPadding: EdgeInsetsDirectional.only(
-                                    start: 18, end: 18, top: 4, bottom: 4),
-                                labelText: 'Password',
-                                suffix: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _passwordHidden = !_passwordHidden;
-                                    });
-                                  },
-                                  child: Text(_passwordHidden ? "Show" : "Hide",
+                          margin: keyboardVisible
+                              ? EdgeInsetsDirectional.zero
+                              : EdgeInsetsDirectional.only(top: 0, bottom: 18),
+                          child: ConstrainedBox(
+                              constraints:
+                                  BoxConstraints.tight(Size.fromHeight(110)),
+                              child: Column(children: [
+                                Flexible(
+                                  flex: 1,
+                                  fit: FlexFit.tight,
+                                  child: Text("Everglot",
                                       style: GoogleFonts.poppins(
-                                          color: primary, fontSize: 14)),
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.w600)),
                                 ),
-                              ),
-                              obscureText: _passwordHidden,
-                              validator: (value) =>
-                                  (value == null || value.isEmpty)
-                                      ? "Please enter a password"
-                                      : null,
-                            ),
-                            SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                    onPressed: _handleEmailSignIn,
-                                    child: Text("Login",
+                                Flexible(
+                                    flex: 1,
+                                    fit: FlexFit.tight,
+                                    child: Text("Learn Together",
                                         style: GoogleFonts.poppins(
-                                            fontSize: 18, color: Colors.white)),
-                                    style: ElevatedButton.styleFrom(
-                                        padding: EdgeInsetsDirectional.only(
-                                            top: 6, bottom: 6),
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(32)))))
-                          ]))),
-                  Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        GoogleAuthButton(
-                          onPressed: _handleGoogleSignIn,
-                          darkMode: false,
-                        ),
-                      ])
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600))),
+                              ])))),
+                  Flexible(
+                      flex: 3,
+                      fit: FlexFit.tight,
+                      child: Form(
+                          key: _formKey,
+                          child: Container(
+                              margin: EdgeInsetsDirectional.only(
+                                  start: 16, end: 16),
+                              child: Column(children: [
+                                TextFormField(
+                                  controller: _emailController,
+                                  decoration: InputDecoration(
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(32)),
+                                      labelStyle: GoogleFonts.poppins(),
+                                      fillColor: Colors.grey[100],
+                                      filled: true,
+                                      contentPadding:
+                                          EdgeInsetsDirectional.only(
+                                              start: 18,
+                                              end: 18,
+                                              top: 4,
+                                              bottom: 4),
+                                      labelText: 'Email'),
+                                  validator: (value) =>
+                                      (value == null || value.isEmpty)
+                                          ? "Please enter an email"
+                                          : EmailValidator.validate(value)
+                                              ? null
+                                              : "Please enter a valid email",
+                                ),
+                                Container(height: 4),
+                                TextFormField(
+                                  controller: _passwordController,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(32)),
+                                    labelStyle: GoogleFonts.poppins(),
+                                    fillColor: Colors.grey[100],
+                                    filled: true,
+                                    contentPadding: EdgeInsetsDirectional.only(
+                                        start: 18, end: 18, top: 4, bottom: 4),
+                                    labelText: 'Password',
+                                    suffix: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _passwordHidden = !_passwordHidden;
+                                        });
+                                      },
+                                      child: Text(
+                                          _passwordHidden ? "Show" : "Hide",
+                                          style: GoogleFonts.poppins(
+                                              color: primary, fontSize: 14)),
+                                    ),
+                                  ),
+                                  obscureText: _passwordHidden,
+                                  validator: (value) =>
+                                      (value == null || value.isEmpty)
+                                          ? "Please enter a password"
+                                          : null,
+                                ),
+                                SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                        onPressed: _handleEmailSignIn,
+                                        child: Text("Login",
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 18,
+                                                color: Colors.white)),
+                                        style: ElevatedButton.styleFrom(
+                                            padding: EdgeInsetsDirectional.only(
+                                                top: 6, bottom: 6),
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        32)))))
+                              ])))),
+                  Flexible(
+                      flex: 1,
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            GoogleAuthButton(
+                              onPressed: _handleGoogleSignIn,
+                              darkMode: false,
+                            ),
+                          ]))
                 ]))));
   }
 }
