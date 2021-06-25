@@ -76,7 +76,6 @@ class WebAppState extends State<WebAppContainer> {
         if (response && response.redirected && response.url && response.url.length) {
           console.log("Login HTTP request succeeded with redirect to "+ response.url);
           history.replaceState(null, '', response.url);
-          $tryShowPageContentsJsFunc();
           return;
         }
         response.json().then(function (res) {
@@ -97,20 +96,6 @@ class WebAppState extends State<WebAppContainer> {
     """);
   }
 
-  Future<bool> _tryHidePageContents() async {
-    print("Trying to hide page contents …");
-    return (await _webViewController
-            ?.evaluateJavascript("""$tryHidePageContentsJsFunc();""")) ==
-        "true";
-  }
-
-  Future<bool> _tryShowPageContents() async {
-    print("Trying to show page contents …");
-    return (await _webViewController
-            ?.evaluateJavascript("""$tryShowPageContentsJsFunc();""")) ==
-        "true";
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -121,12 +106,12 @@ class WebAppState extends State<WebAppContainer> {
           }
           if (snapshot.connectionState == ConnectionState.done) {
             final everglotRootUrl = snapshot.data as String;
-            final everglotLoginUrl = everglotRootUrl + "login";
+            final everglotPlaceholderUrl = everglotRootUrl + "placeholder";
             return Scaffold(
                 resizeToAvoidBottomInset: true,
                 body: SafeArea(
                     child: WebView(
-                  initialUrl: everglotRootUrl,
+                  initialUrl: everglotPlaceholderUrl,
                   javascriptMode: JavascriptMode.unrestricted,
                   javascriptChannels: Set.from([
                     JavascriptChannel(
@@ -154,7 +139,6 @@ class WebAppState extends State<WebAppContainer> {
                           print("Login state changed: " + message.message);
                           if (_loggedIn) {
                             await _webViewController?.loadUrl(everglotRootUrl);
-                            await _tryShowPageContents();
                           } else {
                             await Navigator.pushReplacementNamed(context, "/",
                                 arguments: LoginPageArguments(true));
@@ -164,26 +148,14 @@ class WebAppState extends State<WebAppContainer> {
                   onWebViewCreated: (WebViewController controller) async {
                     _webViewController = controller;
                     print("Web view created");
-                    await _tryHidePageContents();
-                  },
-                  onPageStarted: (String page) async {
-                    print("Page started: " + page);
-                    if (page.startsWith(everglotLoginUrl)) {
-                      await _tryHidePageContents();
-                    } else {
-                      await _tryShowPageContents();
-                    }
                   },
                   onPageFinished: (String page) async {
                     print("Page finished: " + page);
-                    if (page.startsWith(everglotLoginUrl)) {
+                    if (page.startsWith(everglotPlaceholderUrl)) {
                       setState(() {
                         _loggedIn = false;
                       });
-                      await _tryHidePageContents();
                       await _tryLogin();
-                    } else {
-                      await _tryShowPageContents();
                     }
                     _webViewController?.evaluateJavascript("""
                       $initializeLocationChangeListenersJsFunc();
