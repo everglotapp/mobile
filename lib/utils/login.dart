@@ -88,7 +88,7 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
   );
 }
 
-Future<inappwebview.Cookie?> resolveSessionCookie(
+Future<inappwebview.Cookie?> getStoredSessionCookie(
     {String name = EVERGLOT_SESSION_COOKIE_HEADER_NAME}) async {
   final cookieManager = _getCookieManager();
 
@@ -100,4 +100,12 @@ Future<inappwebview.Cookie?> resolveSessionCookie(
   }
   print(cookie.toString());
   return cookie;
+}
+
+Future<inappwebview.Cookie?> removeStoredSessionCookie(
+    {String name = EVERGLOT_SESSION_COOKIE_HEADER_NAME}) async {
+  final cookieManager = _getCookieManager();
+
+  await cookieManager.deleteCookie(
+      url: Uri.parse(await getEverglotUrl(path: "/login")), name: name);
 }

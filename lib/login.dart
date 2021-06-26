@@ -115,6 +115,8 @@ class LoginPageState extends State<LoginPage> {
     if (args != null && (args as LoginPageArguments).signedOut) {
       // Automatically sign out from Google as user just signed out from app.
       _googleSignIn.signOut();
+      // Unset any stored session cookie to prevent sign in upon app restart.
+      removeStoredSessionCookie();
       return;
     }
     /**
@@ -130,7 +132,7 @@ class LoginPageState extends State<LoginPage> {
       print("Automatic silent Google sign in failed: " + error.toString());
     }
     // Try to sign in with stored cookie header.
-    final cookie = await resolveSessionCookie();
+    final cookie = await getStoredSessionCookie();
     if (cookie != null) {
       // Check if expired.
       print("Session cookie header exists, moving to webapp route");
