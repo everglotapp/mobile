@@ -249,8 +249,8 @@ class LoginPageState extends State<LoginPage> {
                                             fontWeight: FontWeight.w600))),
                               ])))),
                   Flexible(
-                      flex: 3,
-                      fit: FlexFit.tight,
+                      flex: 4,
+                      fit: FlexFit.loose,
                       child: Form(
                           key: _formKey,
                           child: Container(
@@ -315,11 +315,12 @@ class LoginPageState extends State<LoginPage> {
                                           ? "Passwords must be at least 8 characters long"
                                           : null),
                                 ),
+                                Container(height: 6),
                                 (_feedback == null || _feedback!.length == 0)
                                     ? SizedBox.shrink()
                                     : Container(
                                         padding: EdgeInsetsDirectional.only(
-                                            top: 12, bottom: 12),
+                                            top: 4, bottom: 6),
                                         child: Center(
                                             child: Text(_feedback!,
                                                 style: TextStyle(
@@ -340,21 +341,19 @@ class LoginPageState extends State<LoginPage> {
                                             shape: RoundedRectangleBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(
-                                                        32)))))
+                                                        32))))),
+                                keyboardVisible
+                                    ? SizedBox.shrink()
+                                    : Container(
+                                        margin:
+                                            EdgeInsetsDirectional.only(top: 8),
+                                        child: Center(
+                                          child: GoogleAuthButton(
+                                            onPressed: _handleGoogleSignIn,
+                                            darkMode: false,
+                                          ),
+                                        ))
                               ])))),
-                  keyboardVisible
-                      ? SizedBox.shrink()
-                      : Flexible(
-                          flex: 4,
-                          fit: FlexFit.loose,
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                GoogleAuthButton(
-                                  onPressed: _handleGoogleSignIn,
-                                  darkMode: false,
-                                ),
-                              ]))
                 ]))));
   }
 }
