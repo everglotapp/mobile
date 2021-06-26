@@ -74,6 +74,9 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
   final defaultExpiryMs =
       DateTime.now().add(Duration(hours: 1)).millisecondsSinceEpoch;
 
+  if (kDebugMode) {
+    print("Setting session cookie: " + cookieHeader);
+  }
   final cookie = Cookie.fromSetCookieValue(cookieHeader);
   await cookieManager.setCookie(
     url: url,
@@ -92,13 +95,16 @@ Future<inappwebview.Cookie?> getStoredSessionCookie(
     {String name = EVERGLOT_SESSION_COOKIE_HEADER_NAME}) async {
   final cookieManager = _getCookieManager();
 
-  final cookie = await cookieManager.getCookie(
-      url: Uri.parse(await getEverglotUrl(path: "/login")), name: name);
+  final url = await getEverglotUrl(path: "/login");
+  final cookie = await cookieManager.getCookie(url: Uri.parse(url), name: name);
 
   if (cookie == null) {
     return null;
   }
-  print(cookie.toString());
+
+  if (kDebugMode) {
+    print("Retrieved stored session cookie for URL $url: " + cookie.toString());
+  }
   return cookie;
 }
 
@@ -106,6 +112,9 @@ Future<inappwebview.Cookie?> removeStoredSessionCookie(
     {String name = EVERGLOT_SESSION_COOKIE_HEADER_NAME}) async {
   final cookieManager = _getCookieManager();
 
-  await cookieManager.deleteCookie(
-      url: Uri.parse(await getEverglotUrl(path: "/login")), name: name);
+  final url = await getEverglotUrl(path: "/login");
+  if (kDebugMode) {
+    print("Removing any stored session cookie for URL $url and name $name");
+  }
+  await cookieManager.deleteCookie(url: Uri.parse(url), name: name);
 }

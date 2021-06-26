@@ -84,10 +84,10 @@ class LoginPageState extends State<LoginPage> {
                   print(
                       "Signed in to Everglot via Google. Will now try to register FCM token.");
                   tryRegisterFcmToken(fcmToken, cookieHeader);
-                  registerSessionCookie(cookieHeader, response.request!.url);
+                  await registerSessionCookie(
+                      cookieHeader, response.request!.url);
                   await Navigator.pushReplacementNamed(context, "/webapp");
                 }
-                return;
               }
             }
             final jsonResponse = json.decode(response.body);
@@ -100,11 +100,11 @@ class LoginPageState extends State<LoginPage> {
             }
             print("Signing into Everglot failed: " + response.body);
           }).onError((error, stackTrace) {
-            print('Login request produced an error');
+            print('Login request produced an error: ' + error.toString());
+            print(stackTrace);
             return Future.value();
           });
         }
-        await Navigator.pushReplacementNamed(context, "/webapp");
       }
     }
   }
