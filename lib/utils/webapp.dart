@@ -17,3 +17,13 @@ Future<String> getEverglotUrl({String path = '/'}) async {
   }
   return 'https://app.everglot.com' + path;
 }
+
+String getWebviewUserAgent() {
+  if (Platform.isAndroid) {
+    return "ANDROID_WEBVIEW";
+  }
+  if (Platform.isIOS) {
+    return "IOS_WEBVIEW";
+  }
+  return "MOBILE_APP_WEBVIEW";
+}

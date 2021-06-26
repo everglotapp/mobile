@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
+import 'package:everglot/utils/ui.dart';
 import 'package:everglot/utils/notifications.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -37,20 +38,6 @@ Future<void> _handleBackgroundMessage(RemoteMessage message) async {
 
   print("Handling a background message: ${message.messageId}");
 }
-
-Map<int, Color> colorCodes = {
-  50: Color.fromRGBO(69, 180, 66, .1),
-  100: Color.fromRGBO(69, 180, 66, .2),
-  200: Color.fromRGBO(69, 180, 66, .3),
-  300: Color.fromRGBO(69, 180, 66, .4),
-  400: Color.fromRGBO(69, 180, 66, .5),
-  500: Color.fromRGBO(69, 180, 66, .6),
-  600: Color.fromRGBO(69, 180, 66, .7),
-  700: Color.fromRGBO(69, 180, 66, .8),
-  800: Color.fromRGBO(69, 180, 66, .9),
-  900: Color.fromRGBO(69, 180, 66, 1),
-};
-MaterialColor primary = MaterialColor(0xFF45cdcd, colorCodes);
 
 class App extends StatefulWidget {
   @override
@@ -95,7 +82,7 @@ class _AppState extends State<App> {
                       // or simply save your changes to "hot reload" in a Flutter IDE).
                       // Notice that the counter didn't reset back to zero; the application
                       // is not restarted.
-                      primarySwatch: primary,
+                      primarySwatch: primaryColor,
                       fontFamily: "Noto",
                     ),
                     routes: {
@@ -124,7 +111,7 @@ class SplashScreen extends StatelessWidget {
                     children: [
                   Text("Everglot",
                       style: TextStyle(
-                          color: primary,
+                          color: primaryColor,
                           fontFamily: "Noto",
                           fontSize: 32,
                           fontWeight: FontWeight.bold))
@@ -138,7 +125,7 @@ class ErrorPage extends StatelessWidget {
     return Directionality(
         textDirection: TextDirection.ltr,
         child: Container(
-            color: primary,
+            color: primaryColor,
             child: Center(
                 child: Row(
                     mainAxisSize: MainAxisSize.max,

@@ -1,30 +1,11 @@
 import 'dart:io';
 import 'package:everglot/login.dart';
+import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/webapp.dart';
+import 'package:everglot/utils/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-abstract class WebAppArguments {
-  late final SignInMethod method;
-}
-
-enum SignInMethod { Google, Email }
-
-class GoogleSignInArguments extends WebAppArguments {
-  final SignInMethod method = SignInMethod.Google;
-  final String idToken;
-
-  GoogleSignInArguments(this.idToken);
-}
-
-class EmailSignInArguments extends WebAppArguments {
-  final SignInMethod method = SignInMethod.Email;
-  final String email;
-  final String password;
-
-  EmailSignInArguments(this.email, this.password);
-}
 
 class WebAppContainer extends StatefulWidget {
   @override
@@ -39,6 +20,7 @@ class WebAppState extends State<WebAppContainer> {
       crossPlatform: InAppWebViewOptions(
         useShouldOverrideUrlLoading: true,
         mediaPlaybackRequiresUserGesture: false,
+        userAgent: getWebviewUserAgent(),
       ),
       android: AndroidInAppWebViewOptions(
         useHybridComposition: true,
@@ -57,7 +39,7 @@ class WebAppState extends State<WebAppContainer> {
 
     pullToRefreshController = PullToRefreshController(
       options: PullToRefreshOptions(
-        color: Colors.blue,
+        color: primaryColor,
       ),
       onRefresh: () async {
         if (Platform.isAndroid) {
@@ -106,8 +88,8 @@ class WebAppState extends State<WebAppContainer> {
                     },
                     shouldOverrideUrlLoading:
                         (controller, navigationAction) async {
-                      var uri = navigationAction.request.url!;
-
+                      final uri = navigationAction.request.url!;
+                      final url = uri.toString();
                       if (![
                         "http",
                         "https",
@@ -121,7 +103,11 @@ class WebAppState extends State<WebAppContainer> {
                           return NavigationActionPolicy.CANCEL;
                         }
                       }
-                      // TODO: Prevent non-Everglot URLs
+
+                      // Forbid non-Everglot URLs.
+                      if (!url.startsWith(await getEverglotUrl(path: ""))) {
+                        return NavigationActionPolicy.CANCEL;
+                      }
 
                       return NavigationActionPolicy.ALLOW;
                     },
@@ -149,13 +135,16 @@ class WebAppState extends State<WebAppContainer> {
                         this.url = url.toString();
                         urlController.text = this.url;
                       });
+                      // Prevent /login and /join routes from showing.
                       if (this.url.startsWith(
                               await getEverglotUrl(path: "/join")) ||
                           this.url.startsWith(
                               await getEverglotUrl(path: "/login"))) {
                         print(
-                            "Logged out state detected, switching to login screen");
-                        await Navigator.pushReplacementNamed(context, "/",
+                            "Logged out state detected, switching to login screen and removing stored cookie");
+                        await removeStoredSessionCookie();
+
+                        await Navigator.popAndPushNamed(context, "/",
                             arguments: LoginPageArguments(true));
                       }
                     },
@@ -222,15 +211,5 @@ class WebAppState extends State<WebAppContainer> {
           }
           return Scaffold();
         });
-  }
-
-  String _getWebviewUserAgent() {
-    if (Platform.isAndroid) {
-      return "ANDROID_WEBVIEW";
-    }
-    if (Platform.isIOS) {
-      return "IOS_WEBVIEW";
-    }
-    return "MOBILE_APP_WEBVIEW";
   }
 }
