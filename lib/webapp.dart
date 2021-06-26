@@ -1,30 +1,10 @@
 import 'dart:io';
 import 'package:everglot/login.dart';
 import 'package:everglot/utils/webapp.dart';
+import 'package:everglot/utils/ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-abstract class WebAppArguments {
-  late final SignInMethod method;
-}
-
-enum SignInMethod { Google, Email }
-
-class GoogleSignInArguments extends WebAppArguments {
-  final SignInMethod method = SignInMethod.Google;
-  final String idToken;
-
-  GoogleSignInArguments(this.idToken);
-}
-
-class EmailSignInArguments extends WebAppArguments {
-  final SignInMethod method = SignInMethod.Email;
-  final String email;
-  final String password;
-
-  EmailSignInArguments(this.email, this.password);
-}
 
 class WebAppContainer extends StatefulWidget {
   @override
@@ -57,7 +37,7 @@ class WebAppState extends State<WebAppContainer> {
 
     pullToRefreshController = PullToRefreshController(
       options: PullToRefreshOptions(
-        color: Colors.blue,
+        color: primaryColor,
       ),
       onRefresh: () async {
         if (Platform.isAndroid) {

@@ -7,3 +7,5 @@ const GOOGLE_CLIENT_ID_WEB =
 
 const EVERGLOT_AUTH_METHOD_GOOGLE = "google";
 const EVERGLOT_AUTH_METHOD_EMAIL = "email";
+
+const EVERGLOT_SESSION_COOKIE_HEADER_NAME = "everglot_sid";
