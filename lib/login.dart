@@ -212,7 +212,7 @@ class LoginPageState extends State<LoginPage> {
                           fit: FlexFit.loose,
                           child: new Image.asset(
                             'assets/images/logo.png',
-                            height: 100.0,
+                            height: 50.0,
                             fit: BoxFit.cover,
                           )),
                   Flexible(
@@ -226,14 +226,6 @@ class LoginPageState extends State<LoginPage> {
                               constraints:
                                   BoxConstraints.tight(Size.fromHeight(110)),
                               child: Column(children: [
-                                Flexible(
-                                  flex: 1,
-                                  fit: FlexFit.tight,
-                                  child: Text("Everglot",
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 35,
-                                          fontWeight: FontWeight.w600)),
-                                ),
                                 Flexible(
                                     flex: 1,
                                     fit: FlexFit.tight,
