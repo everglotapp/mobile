@@ -210,17 +210,11 @@ class LoginPageState extends State<LoginPage> {
                       : Flexible(
                           flex: 2,
                           fit: FlexFit.loose,
-                          child: Container(
-                              height: 96,
-                              width: 96,
-                              decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(96)),
-                              child: Center(
-                                  child: Text("EVG",
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24))))),
+                          child: new Image.asset(
+                            'assets/images/logo.png',
+                            height: 100.0,
+                            fit: BoxFit.cover,
+                          )),
                   Flexible(
                       flex: 3,
                       fit: FlexFit.loose,
@@ -237,7 +231,7 @@ class LoginPageState extends State<LoginPage> {
                                   fit: FlexFit.tight,
                                   child: Text("Everglot",
                                       style: GoogleFonts.poppins(
-                                          fontSize: 28,
+                                          fontSize: 35,
                                           fontWeight: FontWeight.w600)),
                                 ),
                                 Flexible(
@@ -245,7 +239,7 @@ class LoginPageState extends State<LoginPage> {
                                     fit: FlexFit.tight,
                                     child: Text("Learn Together",
                                         style: GoogleFonts.poppins(
-                                            fontSize: 18,
+                                            fontSize: 22,
                                             fontWeight: FontWeight.w600))),
                               ])))),
                   Flexible(
