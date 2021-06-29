@@ -205,16 +205,14 @@ class LoginPageState extends State<LoginPage> {
                 child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                  keyboardVisible
-                      ? SizedBox.shrink()
-                      : Flexible(
-                          flex: 2,
-                          fit: FlexFit.loose,
-                          child: new Image.asset(
-                            'assets/images/logo.png',
-                            height: 50.0,
-                            fit: BoxFit.cover,
-                          )),
+                  Flexible(
+                      flex: 2,
+                      fit: FlexFit.loose,
+                      child: new Image.asset(
+                        'assets/images/logo.png',
+                        height: 50.0,
+                        fit: BoxFit.cover,
+                      )),
                   Flexible(
                       flex: 3,
                       fit: FlexFit.loose,
