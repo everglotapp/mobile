@@ -21,6 +21,7 @@ String getGoogleClientId() {
 }
 
 Future<http.Response> tryGoogleLogin(String idToken) async {
+  print("tryGoogleLogin");
   final loginUrl = await getEverglotUrl(path: "/login");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
@@ -33,12 +34,46 @@ Future<http.Response> tryGoogleLogin(String idToken) async {
 }
 
 Future<http.Response> tryEmailLogin(String email, String password) async {
+  print("tryEmailLogin");
   final loginUrl = await getEverglotUrl(path: "/login");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
         "method": EVERGLOT_AUTH_METHOD_EMAIL,
         "email": email,
         "password": password,
+      }),
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+      });
+}
+
+Future<http.Response> tryGoogleSignUp(String idToken) async {
+  print("tryGoogleSignUp");
+  final loginUrl = await getEverglotUrl(path: "/join");
+  return http.post(Uri.parse(loginUrl),
+      body: jsonEncode({
+        "method": EVERGLOT_AUTH_METHOD_GOOGLE,
+        "idToken": idToken,
+        "token": Platform.isIOS
+            ? EVERGLOT_SIGN_UP_TOKEN_IOS
+            : (Platform.isAndroid ? EVERGLOT_SIGN_UP_TOKEN_ANDROID : null),
+      }),
+      headers: {
+        HttpHeaders.contentTypeHeader: 'application/json',
+      });
+}
+
+Future<http.Response> tryEmailSignUp(String email, String password) async {
+  print("tryEmailSignUp");
+  final loginUrl = await getEverglotUrl(path: "/join");
+  return http.post(Uri.parse(loginUrl),
+      body: jsonEncode({
+        "method": EVERGLOT_AUTH_METHOD_EMAIL,
+        "email": email,
+        "password": password,
+        "token": Platform.isIOS
+            ? EVERGLOT_SIGN_UP_TOKEN_IOS
+            : (Platform.isAndroid ? EVERGLOT_SIGN_UP_TOKEN_ANDROID : null),
       }),
       headers: {
         HttpHeaders.contentTypeHeader: 'application/json',

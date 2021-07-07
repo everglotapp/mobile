@@ -34,6 +34,7 @@ class LoginPageState extends State<LoginPage> {
   );
   Messaging? _messaging;
   bool _passwordHidden = true;
+  bool _hasAccount = true;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -70,7 +71,8 @@ class LoginPageState extends State<LoginPage> {
         final idToken = authentication.idToken!;
         if (_messaging != null && _messaging!.fcmToken != null) {
           final fcmToken = _messaging!.fcmToken!;
-          tryGoogleLogin(idToken).then((http.Response response) async {
+          final authFunction = _hasAccount ? tryGoogleLogin : tryGoogleSignUp;
+          authFunction(idToken).then((http.Response response) async {
             final int statusCode = response.statusCode;
 
             if (statusCode == 200) {
@@ -140,11 +142,14 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleGoogleSignIn() async {
+  Future<void> _handleGoogleSignInOrUp() async {
     try {
       setState(() {
         _feedback = null;
       });
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.signOut();
+      }
       await _googleSignIn.signIn();
     } catch (error) {
       print("Google sign in failed: " + error.toString());
@@ -153,7 +158,7 @@ class LoginPageState extends State<LoginPage> {
 
   // Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
 
-  Future<void> _handleEmailSignIn() async {
+  Future<void> _handleEmailSignInOrUp() async {
     setState(() {
       _feedback = null;
     });
@@ -162,7 +167,8 @@ class LoginPageState extends State<LoginPage> {
     }
     final email = _emailController.text;
     final password = _passwordController.text;
-    tryEmailLogin(email, password).then((http.Response response) async {
+    final authFunction = _hasAccount ? tryEmailLogin : tryEmailSignUp;
+    authFunction(email, password).then((http.Response response) async {
       final int statusCode = response.statusCode;
 
       if (statusCode == 200) {
@@ -208,7 +214,7 @@ class LoginPageState extends State<LoginPage> {
                   Flexible(
                       flex: 2,
                       fit: FlexFit.loose,
-                      child: new Image.asset(
+                      child: Image.asset(
                         'assets/images/logo.png',
                         height: 50.0,
                         fit: BoxFit.cover,
@@ -233,7 +239,7 @@ class LoginPageState extends State<LoginPage> {
                                             fontWeight: FontWeight.w600))),
                               ])))),
                   Flexible(
-                      flex: 4,
+                      flex: 6,
                       fit: FlexFit.loose,
                       child: Form(
                           key: _formKey,
@@ -314,8 +320,9 @@ class LoginPageState extends State<LoginPage> {
                                 SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
-                                        onPressed: _handleEmailSignIn,
-                                        child: Text("Login",
+                                        onPressed: _handleEmailSignInOrUp,
+                                        child: Text(
+                                            _hasAccount ? "Login" : "Sign up",
                                             style: GoogleFonts.poppins(
                                                 fontSize: 18,
                                                 color: Colors.white)),
@@ -333,9 +340,35 @@ class LoginPageState extends State<LoginPage> {
                                             EdgeInsetsDirectional.only(top: 8),
                                         child: Center(
                                           child: GoogleAuthButton(
-                                            onPressed: _handleGoogleSignIn,
+                                            onPressed: _handleGoogleSignInOrUp,
                                             darkMode: false,
+                                            text: _hasAccount
+                                                ? "Login with Google"
+                                                : "Sign up with Google",
                                           ),
+                                        )),
+                                keyboardVisible
+                                    ? SizedBox.shrink()
+                                    : Container(
+                                        margin:
+                                            EdgeInsetsDirectional.only(top: 1),
+                                        child: Center(
+                                          child: MaterialButton(
+                                              onPressed: () {
+                                                setState(() {
+                                                  _hasAccount = !_hasAccount;
+                                                });
+                                              },
+                                              child: _hasAccount
+                                                  ? Text(
+                                                      "I don't have an account",
+                                                      style: TextStyle(
+                                                          color: primaryColor))
+                                                  : Text(
+                                                      "I already have an account",
+                                                      style: TextStyle(
+                                                          color:
+                                                              primaryColor))),
                                         ))
                               ])))),
                 ]))));
