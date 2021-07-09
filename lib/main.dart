@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
+import 'package:everglot/splash.dart';
+import 'package:everglot/error.dart';
 import 'package:everglot/utils/ui.dart';
 import 'package:everglot/utils/notifications.dart';
 import 'package:everglot/state/messaging.dart';
@@ -94,49 +96,5 @@ class _AppState extends State<App> {
               print("Loading FirebaseApp …");
               return SplashScreen();
             }));
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Container(
-            color: Colors.white,
-            child: Center(
-                child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                  Text("Everglot",
-                      style: TextStyle(
-                          color: primaryColor,
-                          fontFamily: "Noto",
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold))
-                ]))));
-  }
-}
-
-class ErrorPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-        textDirection: TextDirection.ltr,
-        child: Container(
-            color: primaryColor,
-            child: Center(
-                child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                  Text("Error loading Everglot. Please restart the app.",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontFamily: "Noto",
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold))
-                ]))));
   }
 }
