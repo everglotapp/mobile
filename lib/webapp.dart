@@ -5,9 +5,14 @@ import 'package:everglot/utils/webapp.dart';
 import 'package:everglot/utils/ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+class WebAppArguments {
+  String forcePath = "";
+
+  WebAppArguments(this.forcePath);
+}
 
 class WebAppContainer extends StatefulWidget {
   @override
@@ -74,8 +79,18 @@ class WebAppState extends State<WebAppContainer> {
                       URLRequest(url: Uri.parse(everglotRootUrl)),
                   initialOptions: options,
                   pullToRefreshController: pullToRefreshController,
-                  onWebViewCreated: (controller) {
+                  onWebViewCreated: (controller) async {
                     webViewController = controller;
+                    await Future.delayed(Duration.zero);
+                    final args = ModalRoute.of(context)!.settings.arguments;
+                    if (args != null &&
+                        (args as WebAppArguments).forcePath.isNotEmpty) {
+                      final path = args.forcePath;
+                      controller.loadUrl(
+                          urlRequest: URLRequest(
+                              url:
+                                  Uri.parse(await getEverglotUrl(path: path))));
+                    }
                   },
                   onLoadStart: (controller, url) {
                     setState(() {

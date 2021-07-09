@@ -56,6 +56,44 @@ class _AppState extends State<App> {
     return app;
   });
 
+  // It is assumed that all messages contain a data field with the key 'type'
+  Future<void> setupInteractedMessage() async {
+    // Get any messages which caused the application to open from
+    // a terminated state.
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    // If the message also contains a data property with a "type" of "chat",
+    // navigate to a chat screen
+    if (initialMessage != null &&
+        initialMessage.data['type'] == 'GROUP_MESSAGE') {
+      final recipientGroupUuid = initialMessage.data["recipientGroupUuid"];
+      print(recipientGroupUuid);
+      await Navigator.pushReplacementNamed(context, "/webapp",
+          arguments: WebAppArguments("/chat?group=$recipientGroupUuid"));
+    }
+
+    // Also handle any interaction when the app is in the background via a
+    // Stream listener
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
+      if (message.data['type'] == 'GROUP_MESSAGE') {
+        final recipientGroupUuid = message.data["recipientGroupUuid"];
+        print(recipientGroupUuid);
+        await Navigator.pushReplacementNamed(context, "/webapp",
+            arguments: WebAppArguments("/chat?group=$recipientGroupUuid"));
+      }
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Run code required to handle interacted messages in an async function
+    // as initState() must not be async
+    setupInteractedMessage();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
