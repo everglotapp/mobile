@@ -3,6 +3,7 @@ import 'package:everglot/login.dart';
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/webapp.dart';
 import 'package:everglot/utils/ui.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -165,7 +166,7 @@ class WebAppState extends State<WebAppContainer> {
                       await Navigator.popAndPushNamed(context, "/",
                           arguments: LoginPageArguments(true));
                     }
-                    print(url);
+                    print("Visited URL: $url");
                   },
                   onConsoleMessage: (controller, consoleMessage) {
                     print(consoleMessage);

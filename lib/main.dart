@@ -45,39 +45,39 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  final GlobalKey<NavigatorState> _navigator = GlobalKey<NavigatorState>();
   final _messaging = Messaging();
   late final Future<FirebaseApp> _initialization =
       Firebase.initializeApp().then((app) async {
     final token = await getFcmToken();
     _messaging.fcmToken = token;
-    await _setupInteractedMessage();
+    await _setupHandleInteractionWithNotification();
     await listenForeground();
     return app;
   });
 
-  Future<void> _setupInteractedMessage() async {
+  Future<void> _setupHandleInteractionWithNotification() async {
     // Get any messages which caused the application to open from
     // a terminated state.
     RemoteMessage? initialMessage =
         await FirebaseMessaging.instance.getInitialMessage();
 
-    // If the message also contains a data property with a "type" of "chat",
-    // navigate to a chat screen
-    if (initialMessage != null &&
-        initialMessage.data['type'] == 'GROUP_MESSAGE') {
-      final recipientGroupUuid = initialMessage.data["recipientGroupUuid"];
-      print(recipientGroupUuid);
-      await Navigator.pushReplacementNamed(context, "/webapp",
-          arguments: WebAppArguments("/chat?group=$recipientGroupUuid"));
+    if (initialMessage == null ||
+        initialMessage.data['type'] != 'GROUP_MESSAGE') {
+      return;
     }
+    final recipientGroupUuid = initialMessage.data["recipientGroupUuid"];
+    print(recipientGroupUuid);
+    await _navigator.currentState?.pushReplacementNamed("/webapp",
+        arguments: WebAppArguments("/chat?group=$recipientGroupUuid"));
 
-    // Also handle any interaction when the app is in the background via a
+    // Hndle any interaction when the app is in the background via a
     // Stream listener
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       if (message.data['type'] == 'GROUP_MESSAGE') {
         final recipientGroupUuid = message.data["recipientGroupUuid"];
         print(recipientGroupUuid);
-        await Navigator.pushReplacementNamed(context, "/webapp",
+        await _navigator.currentState?.pushReplacementNamed("/webapp",
             arguments: WebAppArguments("/chat?group=$recipientGroupUuid"));
       }
     });
@@ -97,10 +97,11 @@ class _AppState extends State<App> {
               }
 
               if (snapshot.connectionState == ConnectionState.done) {
-                print("Loaded app successfully");
+                print("Loaded Firebase app successfully, rendering Everglot");
 
                 return MaterialApp(
                     title: 'Everglot',
+                    navigatorKey: _navigator,
                     theme: ThemeData(
                       // This is the theme of your application.
                       //
