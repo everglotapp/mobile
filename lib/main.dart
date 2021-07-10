@@ -34,8 +34,6 @@ void main() async {
 }
 
 Future<void> _handleBackgroundMessage(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
   await Firebase.initializeApp();
 
   print("Handling a background message: ${message.messageId}");
@@ -52,12 +50,12 @@ class _AppState extends State<App> {
       Firebase.initializeApp().then((app) async {
     final token = await getFcmToken();
     _messaging.fcmToken = token;
+    await _setupInteractedMessage();
     await listenForeground();
     return app;
   });
 
-  // It is assumed that all messages contain a data field with the key 'type'
-  Future<void> setupInteractedMessage() async {
+  Future<void> _setupInteractedMessage() async {
     // Get any messages which caused the application to open from
     // a terminated state.
     RemoteMessage? initialMessage =
@@ -83,15 +81,6 @@ class _AppState extends State<App> {
             arguments: WebAppArguments("/chat?group=$recipientGroupUuid"));
       }
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Run code required to handle interacted messages in an async function
-    // as initState() must not be async
-    setupInteractedMessage();
   }
 
   @override
