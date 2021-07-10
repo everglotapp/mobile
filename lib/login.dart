@@ -35,6 +35,7 @@ class LoginPageState extends State<LoginPage> {
   Messaging? _messaging;
   bool _passwordHidden = true;
   bool _hasAccount = true;
+  bool _transitioningToWebapp = false;
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -46,6 +47,7 @@ class LoginPageState extends State<LoginPage> {
     _googleSignIn.onCurrentUserChanged.listen(handleCurrentUserChanged);
     autoSignInOrOut();
     _messaging = Provider.of<Messaging>(context, listen: false);
+    _transitioningToWebapp = false;
 
     SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
   }
@@ -138,6 +140,9 @@ class LoginPageState extends State<LoginPage> {
     if (cookie != null) {
       // Check if expired.
       print("Session cookie header exists, moving to webapp route");
+      setState(() {
+        _transitioningToWebapp = true;
+      });
       await Navigator.pushReplacementNamed(context, "/webapp");
     }
   }
@@ -183,6 +188,9 @@ class LoginPageState extends State<LoginPage> {
                 "Successfully signed in to Everglot via email. Will now try to register FCM token.");
             tryRegisterFcmToken(_messaging!.fcmToken!, cookieHeader);
             await registerSessionCookie(cookieHeader, response.request!.url);
+            setState(() {
+              _transitioningToWebapp = true;
+            });
             await Navigator.pushReplacementNamed(context, "/webapp");
             return;
           }
@@ -203,6 +211,9 @@ class LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_transitioningToWebapp) {
+      return SafeArea(child: Scaffold());
+    }
     final keyboardVisible = MediaQuery.of(context).viewInsets.bottom != 0;
     return SafeArea(
         child: Scaffold(
