@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/ui.dart';
+import 'package:everglot/webapp.dart';
 import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:flutter/services.dart';
@@ -15,11 +16,17 @@ import 'package:email_validator/email_validator.dart';
 
 class LoginPageArguments {
   bool signedOut = false;
+  String? forcePath;
 
-  LoginPageArguments(this.signedOut);
+  LoginPageArguments(this.signedOut, this.forcePath);
 }
 
 class LoginPage extends StatefulWidget {
+  static const routeName = '/login';
+
+  final String? forcePath;
+  LoginPage(this.forcePath);
+
   @override
   LoginPageState createState() => LoginPageState();
 }
@@ -90,7 +97,8 @@ class LoginPageState extends State<LoginPage> {
                   tryRegisterFcmToken(fcmToken, cookieHeader);
                   await registerSessionCookie(
                       cookieHeader, response.request!.url);
-                  await Navigator.pushReplacementNamed(context, "/webapp");
+                  await _transitionToWebApp();
+                  return;
                 }
               }
             }
@@ -115,8 +123,9 @@ class LoginPageState extends State<LoginPage> {
 
   Future<void> autoSignInOrOut() async {
     await Future.delayed(Duration.zero);
-    final args = ModalRoute.of(context)!.settings.arguments;
-    if (args != null && (args as LoginPageArguments).signedOut) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as LoginPageArguments?;
+    if (args != null && (args).signedOut) {
       // Automatically sign out from Google as user just signed out from app.
       _googleSignIn.signOut();
       // Unset any stored session cookie to prevent sign in upon app restart.
@@ -140,10 +149,7 @@ class LoginPageState extends State<LoginPage> {
     if (cookie != null) {
       // Check if expired.
       print("Session cookie header exists, moving to webapp route");
-      setState(() {
-        _transitioningToWebapp = true;
-      });
-      await Navigator.pushReplacementNamed(context, "/webapp");
+      await _transitionToWebApp();
     }
   }
 
@@ -188,10 +194,7 @@ class LoginPageState extends State<LoginPage> {
                 "Successfully signed in to Everglot via email. Will now try to register FCM token.");
             tryRegisterFcmToken(_messaging!.fcmToken!, cookieHeader);
             await registerSessionCookie(cookieHeader, response.request!.url);
-            setState(() {
-              _transitioningToWebapp = true;
-            });
-            await Navigator.pushReplacementNamed(context, "/webapp");
+            await _transitionToWebApp();
             return;
           }
         }
@@ -207,6 +210,21 @@ class LoginPageState extends State<LoginPage> {
         });
       }
     });
+  }
+
+  Future<String?> _transitionToWebApp() async {
+    setState(() {
+      _transitioningToWebapp = true;
+    });
+    await Future.delayed(Duration.zero);
+    final args =
+        ModalRoute.of(context)!.settings.arguments as LoginPageArguments?;
+    final path = this.widget.forcePath == null
+        ? (args == null ? null : args.forcePath)
+        : this.widget.forcePath;
+    final webAppArguments = path == null ? null : WebAppArguments(path);
+    await Navigator.pushReplacementNamed(context, WebAppContainer.routeName,
+        arguments: webAppArguments);
   }
 
   @override

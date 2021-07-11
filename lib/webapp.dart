@@ -3,7 +3,6 @@ import 'package:everglot/login.dart';
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/webapp.dart';
 import 'package:everglot/utils/ui.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -16,14 +15,19 @@ class WebAppArguments {
 }
 
 class WebAppContainer extends StatefulWidget {
+  static const routeName = '/webapp';
+
+  final String? forcePath;
+  WebAppContainer(this.forcePath);
+
   @override
   WebAppState createState() => WebAppState();
 }
 
-class WebAppState extends State<WebAppContainer> {
-  final Future<String> _initialization = getEverglotUrl();
+class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
+  final Future<String> _initialization = getEverglotUrl(path: "");
   final GlobalKey webViewKey = GlobalKey();
-  InAppWebViewController? webViewController;
+  InAppWebViewController? _webViewController;
   InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
       crossPlatform: InAppWebViewOptions(
           useShouldOverrideUrlLoading: true,
@@ -41,6 +45,7 @@ class WebAppState extends State<WebAppContainer> {
   String url = "";
   double progress = 0;
   final urlController = TextEditingController();
+  String? _pathForced;
 
   @override
   void initState() {
@@ -52,13 +57,28 @@ class WebAppState extends State<WebAppContainer> {
       ),
       onRefresh: () async {
         if (Platform.isAndroid) {
-          webViewController?.reload();
+          _webViewController?.reload();
         } else if (Platform.isIOS) {
-          webViewController?.loadUrl(
-              urlRequest: URLRequest(url: await webViewController?.getUrl()));
+          _webViewController?.loadUrl(
+              urlRequest: URLRequest(url: await _webViewController?.getUrl()));
         }
       },
     );
+  }
+
+  @override
+  void didUpdateWidget(WebAppContainer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final forcePath = widget.forcePath;
+    if (forcePath != null &&
+        (forcePath != this._pathForced || forcePath != oldWidget.forcePath)) {
+      _pathForced = forcePath;
+      () async {
+        _webViewController?.loadUrl(
+            urlRequest: URLRequest(
+                url: Uri.parse(await getEverglotUrl(path: forcePath))));
+      }();
+    }
   }
 
   @override
@@ -70,23 +90,27 @@ class WebAppState extends State<WebAppContainer> {
             return Scaffold();
           }
           if (snapshot.connectionState == ConnectionState.done) {
-            final everglotRootUrl = snapshot.data as String;
+            final everglotBaseUrl = snapshot.data as String;
+            final initialPath =
+                widget.forcePath == null ? "/" : widget.forcePath;
+            final initialUrl = "$everglotBaseUrl$initialPath";
             return Scaffold(
                 resizeToAvoidBottomInset: true,
                 body: SafeArea(
                     child: InAppWebView(
                   key: webViewKey,
-                  initialUrlRequest:
-                      URLRequest(url: Uri.parse(everglotRootUrl)),
+                  initialUrlRequest: URLRequest(url: Uri.parse(initialUrl)),
                   initialOptions: options,
                   pullToRefreshController: pullToRefreshController,
                   onWebViewCreated: (controller) async {
-                    webViewController = controller;
+                    print("onWebViewCreated");
+                    _webViewController = controller;
                     await Future.delayed(Duration.zero);
-                    final args = ModalRoute.of(context)!.settings.arguments;
-                    if (args != null &&
-                        (args as WebAppArguments).forcePath.isNotEmpty) {
+                    final args = ModalRoute.of(context)!.settings.arguments
+                        as WebAppArguments?;
+                    if (args != null && args.forcePath.isNotEmpty) {
                       final path = args.forcePath;
+                      _pathForced = path;
                       controller.loadUrl(
                           urlRequest: URLRequest(
                               url:
@@ -163,8 +187,9 @@ class WebAppState extends State<WebAppContainer> {
                           "Logged out state detected, switching to login screen and removing stored cookie");
                       await removeStoredSessionCookie();
 
-                      await Navigator.popAndPushNamed(context, "/",
-                          arguments: LoginPageArguments(true));
+                      await Navigator.popAndPushNamed(
+                          context, LoginPage.routeName,
+                          arguments: LoginPageArguments(true, uri!.path));
                     }
                     print("Visited URL: $url");
                   },

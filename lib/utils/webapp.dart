@@ -18,6 +18,10 @@ Future<String> getEverglotUrl({String path = '/'}) async {
   return 'https://app.everglot.com' + path;
 }
 
+String getChatPath(String groupUuid) {
+  return "/chat?group=$groupUuid";
+}
+
 String getWebviewUserAgent() {
   if (Platform.isAndroid) {
     return "ANDROID_WEBVIEW";

@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 
-Future<NotificationSettings> _tryGetNotificationPermission(FirebaseMessaging messaging) async {
+Future<NotificationSettings> _tryGetNotificationPermission(
+    FirebaseMessaging messaging) async {
   NotificationSettings settings = await messaging.requestPermission(
     alert: true,
     announcement: false,
@@ -21,7 +20,8 @@ Future<String?> getFcmToken() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   if (!Platform.isAndroid) {
-    NotificationSettings _settings = await _tryGetNotificationPermission(messaging);
+    NotificationSettings _settings =
+        await _tryGetNotificationPermission(messaging);
     // print("Notifications authorized?" +
     //     (String)_settings.authorizationStatus);
     // settings.authorizationStatus == AuthorizationStatus.authorized;
