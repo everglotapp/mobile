@@ -72,11 +72,27 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
     final forcePath = widget.forcePath;
     if (forcePath != null &&
         (forcePath != this._pathForced || forcePath != oldWidget.forcePath)) {
-      _pathForced = forcePath;
       () async {
-        _webViewController?.loadUrl(
-            urlRequest: URLRequest(
-                url: Uri.parse(await getEverglotUrl(path: forcePath))));
+        if (_webViewController == null) {
+          return;
+        }
+        final jsResult =
+            await _webViewController!.evaluateJavascript(source: """
+          (function() {
+            if (typeof window === "undefined") {
+              return;
+            }
+            var customEvent = new CustomEvent("everglotGoto", {
+              detail: {
+                path: "$forcePath"
+              }
+            });
+            return window.dispatchEvent(customEvent);
+          })();
+        """);
+        if (jsResult == true) {
+          _pathForced = forcePath;
+        }
       }();
     }
   }
@@ -103,7 +119,6 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                   initialOptions: options,
                   pullToRefreshController: pullToRefreshController,
                   onWebViewCreated: (controller) async {
-                    print("onWebViewCreated");
                     _webViewController = controller;
                     await Future.delayed(Duration.zero);
                     final args = ModalRoute.of(context)!.settings.arguments
