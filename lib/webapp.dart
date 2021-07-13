@@ -164,6 +164,12 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
 
                     // Forbid non-Everglot URLs.
                     if (!url.startsWith(await getEverglotUrl(path: ""))) {
+                      if (url.startsWith("https://survey.everglot.com/")) {
+                        // Launch survey links externally.
+                        await launch(
+                          url,
+                        );
+                      }
                       return NavigationActionPolicy.CANCEL;
                     }
 
