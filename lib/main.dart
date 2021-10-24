@@ -62,19 +62,45 @@ class _AppState extends State<App> {
     // Handle any interaction when the app is in the background via a
     // Stream listener
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
-      if (message.data['type'] != 'GROUP_MESSAGE') {
+      if (message.data['type'] == null) {
         print(
-            "User tapped on non-message notification while app was in background");
+            "User tapped on notification of an unknown type while app was in background");
         return;
       }
-      final recipientGroupUuid = message.data["recipientGroupUuid"];
+      final messageType = message.data['type'];
       print(
-          "While in background, user tapped on a notification for a message with recipientGroupUuid: $recipientGroupUuid");
-      print("User tapped on notification while app was in background");
-      setState(() {
-        _forcePath = getChatPath(recipientGroupUuid);
-      });
-      print("Forcing path to $_forcePath");
+          "User tapped on notification of type '$messageType' while app was in background");
+      switch (messageType) {
+        case 'GROUP_MESSAGE':
+          {
+            final recipientGroupUuid = message.data["recipientGroupUuid"];
+            print(
+                "While in background, user tapped on a notification for a message with recipientGroupUuid: $recipientGroupUuid");
+            setState(() {
+              _forcePath = getChatPath(recipientGroupUuid);
+            });
+            print("Forcing path to $_forcePath");
+          }
+          break;
+        case 'POST_LIKE':
+          {
+            final postSnowflakeId = message.data["postSnowflakeId"];
+            setState(() {
+              _forcePath = getSqueekPath(postSnowflakeId);
+            });
+            print("Forcing path to $_forcePath");
+          }
+          break;
+        case 'POST_REPLY':
+          {
+            final parentPostSnowflakeId = message.data["parentPostSnowflakeId"];
+            setState(() {
+              _forcePath = getSqueekPath(parentPostSnowflakeId);
+            });
+            print("Forcing path to $_forcePath");
+          }
+          break;
+      }
     });
 
     // Get any messages which caused the application to open from
