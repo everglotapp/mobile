@@ -100,6 +100,15 @@ class _AppState extends State<App> {
             print("Forcing path to $_forcePath");
           }
           break;
+        case 'POST_USER_MENTION':
+          {
+            final parentPostSnowflakeId = message.data["parentPostSnowflakeId"];
+            setState(() {
+              _forcePath = getSqueekPath(parentPostSnowflakeId);
+            });
+            print("Forcing path to $_forcePath");
+          }
+          break;
       }
     });
 
