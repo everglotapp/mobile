@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:everglot/login.dart';
 import 'package:everglot/webapp.dart';
-import 'package:everglot/splash.dart';
 import 'package:everglot/error.dart';
 import 'package:everglot/utils/ui.dart';
 import 'package:everglot/utils/notifications.dart';
@@ -184,7 +183,13 @@ class _AppState extends State<App> {
               }
 
               print("Loading FirebaseApp …");
-              return SplashScreen();
+              return MaterialApp(
+                  title: 'Everglot',
+                  theme: ThemeData(
+                    primarySwatch: primaryColor,
+                    fontFamily: "Noto",
+                  ),
+                  home: Scaffold(body: Container(width: 300)));
             }));
   }
 }
