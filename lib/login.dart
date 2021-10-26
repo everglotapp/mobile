@@ -356,11 +356,13 @@ class LoginPageState extends State<LoginPage> {
                                         child: Text(
                                             _hasAccount ? "Login" : "Sign up",
                                             style: GoogleFonts.poppins(
-                                                fontSize: 18,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
                                                 color: Colors.white)),
                                         style: ElevatedButton.styleFrom(
                                             padding: EdgeInsetsDirectional.only(
-                                                top: 6, bottom: 6),
+                                                top: 8, bottom: 8),
+                                            elevation: 3,
                                             shape: RoundedRectangleBorder(
                                                 borderRadius:
                                                     BorderRadius.circular(
@@ -371,14 +373,20 @@ class LoginPageState extends State<LoginPage> {
                                         margin:
                                             EdgeInsetsDirectional.only(top: 8),
                                         child: Center(
-                                          child: GoogleAuthButton(
-                                            onPressed: _handleGoogleSignInOrUp,
-                                            darkMode: false,
-                                            text: _hasAccount
-                                                ? "Login with Google"
-                                                : "Sign up with Google",
+                                            child: GoogleAuthButton(
+                                          onPressed: _handleGoogleSignInOrUp,
+                                          darkMode: false,
+                                          text: _hasAccount
+                                              ? "Login with Google"
+                                              : "Sign up with Google",
+                                          style: AuthButtonStyle(
+                                            width: 400,
+                                            borderRadius: 32,
+                                            textStyle: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold),
                                           ),
-                                        )),
+                                        ))),
                                 keyboardVisible
                                     ? SizedBox.shrink()
                                     : Container(
@@ -386,21 +394,26 @@ class LoginPageState extends State<LoginPage> {
                                             EdgeInsetsDirectional.only(top: 1),
                                         child: Center(
                                           child: MaterialButton(
-                                              onPressed: () {
-                                                setState(() {
-                                                  _hasAccount = !_hasAccount;
-                                                });
-                                              },
-                                              child: _hasAccount
-                                                  ? Text(
-                                                      "I don't have an account",
-                                                      style: TextStyle(
-                                                          color: primaryColor))
-                                                  : Text(
-                                                      "I already have an account",
-                                                      style: TextStyle(
-                                                          color:
-                                                              primaryColor))),
+                                            onPressed: () {
+                                              setState(() {
+                                                _hasAccount = !_hasAccount;
+                                              });
+                                            },
+                                            child: _hasAccount
+                                                ? Text(
+                                                    "I don't have an account",
+                                                    style: GoogleFonts.poppins(
+                                                        color: primaryColor,
+                                                        fontSize: 14))
+                                                : Text(
+                                                    "I already have an account",
+                                                    style: GoogleFonts.poppins(
+                                                        color: primaryColor,
+                                                        fontSize: 14)),
+                                            minWidth: 400,
+                                            padding: EdgeInsetsDirectional.only(
+                                                top: 2, bottom: 2),
+                                          ),
                                         ))
                               ])))),
                 ]))));
