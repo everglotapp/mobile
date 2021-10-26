@@ -213,6 +213,9 @@ class LoginPageState extends State<LoginPage> {
   }
 
   Future<String?> _transitionToWebApp() async {
+    if (!mounted || _transitioningToWebapp) {
+      return null;
+    }
     setState(() {
       _transitioningToWebapp = true;
     });
