@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 
 import 'package:everglot/routes/login.dart';
 import 'package:everglot/routes/webapp.dart';
@@ -29,6 +30,28 @@ class _AppState extends State<App> {
   });
   String? _forcePath;
 
+  void goToGroup(String groupUuid) {
+    if (!Uuid.isValidUUID(fromString: groupUuid)) {
+      print("showGroup: Invalid group UUID: $groupUuid");
+      return;
+    }
+    setState(() {
+      _forcePath = getChatPath(groupUuid);
+    });
+    print("Forcing path to $_forcePath");
+  }
+
+  void goToSqueek(String snowflakeId) {
+    if (BigInt.tryParse(snowflakeId) == null) {
+      print("showSqueek: Invalid snowflake ID: $snowflakeId");
+      return;
+    }
+    setState(() {
+      _forcePath = getSqueekPath(snowflakeId);
+    });
+    print("Forcing path to $_forcePath");
+  }
+
   Future<void> _setupHandleInteractionWithNotification() async {
     // Handle any interaction when the app is in the background via a
     // Stream listener
@@ -42,41 +65,21 @@ class _AppState extends State<App> {
       final notificationType = findNotificationType(messageType);
       print(
           "User tapped on notification of type '$messageType' while app was in background");
-
-      void showGroup(String groupUuid) {
-        setState(() {
-          _forcePath = getChatPath(groupUuid);
-        });
-        print("Forcing path to $_forcePath");
-      }
-
-      void showSqueek(String snowflakeId) {
-        setState(() {
-          _forcePath = getSqueekPath(snowflakeId);
-        });
-        print("Forcing path to $_forcePath");
-      }
-
       switch (notificationType) {
         case NotificationType.GroupMessage:
-          {
-            final recipientGroupUuid = message.data["recipientGroupUuid"];
-            print(
-                "While in background, user tapped on a notification for a message with recipientGroupUuid: $recipientGroupUuid");
-            showGroup(recipientGroupUuid);
-          }
+          goToGroup(message.data["recipientGroupUuid"]);
           break;
         case NotificationType.PostLike:
-          showSqueek(message.data["postSnowflakeId"]);
+          goToSqueek(message.data["postSnowflakeId"]);
           break;
         case NotificationType.PostCorrection:
-          showSqueek(message.data["postSnowflakeId"]);
+          goToSqueek(message.data["postSnowflakeId"]);
           break;
         case NotificationType.PostReply:
-          showSqueek(message.data["parentPostSnowflakeId"]);
+          goToSqueek(message.data["parentPostSnowflakeId"]);
           break;
         case NotificationType.PostUserMention:
-          showSqueek(message.data["parentPostSnowflakeId"]);
+          goToSqueek(message.data["parentPostSnowflakeId"]);
           break;
         case null:
           break;
@@ -88,17 +91,32 @@ class _AppState extends State<App> {
     RemoteMessage? initialMessage =
         await FirebaseMessaging.instance.getInitialMessage();
 
-    if (initialMessage == null ||
-        initialMessage.data['type'] != 'GROUP_MESSAGE') {
+    if (initialMessage == null) {
       return;
     }
 
-    final recipientGroupUuid = initialMessage.data["recipientGroupUuid"];
-    print(
-        "App was started with a notification for a message with recipientGroupUuid: $recipientGroupUuid");
-    setState(() {
-      _forcePath = getChatPath(recipientGroupUuid);
-    });
+    final messageType = initialMessage.data['type'];
+    final notificationType = findNotificationType(messageType);
+    print("App was started with a notification of type $messageType");
+    switch (notificationType) {
+      case NotificationType.GroupMessage:
+        goToGroup(initialMessage.data["recipientGroupUuid"]);
+        break;
+      case NotificationType.PostLike:
+        goToSqueek(initialMessage.data["postSnowflakeId"]);
+        break;
+      case NotificationType.PostCorrection:
+        goToSqueek(initialMessage.data["postSnowflakeId"]);
+        break;
+      case NotificationType.PostReply:
+        goToSqueek(initialMessage.data["parentPostSnowflakeId"]);
+        break;
+      case NotificationType.PostUserMention:
+        goToSqueek(initialMessage.data["parentPostSnowflakeId"]);
+        break;
+      case null:
+        break;
+    }
   }
 
   Route<dynamic> _generateRoute(RouteSettings settings) {
