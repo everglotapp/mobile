@@ -1,6 +1,29 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 
+enum NotificationType {
+  PostReply,
+  PostLike,
+  PostCorrection,
+  PostUserMention,
+  GroupMessage
+}
+
+NotificationType? findNotificationType(String type) {
+  switch (type) {
+    case 'POST_REPLY':
+      return NotificationType.PostReply;
+    case "POST_LIKE":
+      return NotificationType.PostLike;
+    case "POST_CORRECTION":
+      return NotificationType.PostCorrection;
+    case "POST_USER_MENTION":
+      return NotificationType.PostUserMention;
+    case "GROUP_MESSAGE":
+      return NotificationType.GroupMessage;
+  }
+}
+
 Future<NotificationSettings> _tryGetNotificationPermission(
     FirebaseMessaging messaging) async {
   NotificationSettings settings = await messaging.requestPermission(

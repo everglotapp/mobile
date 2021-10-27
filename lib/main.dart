@@ -67,46 +67,46 @@ class _AppState extends State<App> {
         return;
       }
       final messageType = message.data['type'];
+      final notificationType = findNotificationType(messageType);
       print(
           "User tapped on notification of type '$messageType' while app was in background");
-      switch (messageType) {
-        case 'GROUP_MESSAGE':
+
+      void showGroup(String groupUuid) {
+        setState(() {
+          _forcePath = getChatPath(groupUuid);
+        });
+        print("Forcing path to $_forcePath");
+      }
+
+      void showSqueek(String snowflakeId) {
+        setState(() {
+          _forcePath = getSqueekPath(snowflakeId);
+        });
+        print("Forcing path to $_forcePath");
+      }
+
+      switch (notificationType) {
+        case NotificationType.GroupMessage:
           {
             final recipientGroupUuid = message.data["recipientGroupUuid"];
             print(
                 "While in background, user tapped on a notification for a message with recipientGroupUuid: $recipientGroupUuid");
-            setState(() {
-              _forcePath = getChatPath(recipientGroupUuid);
-            });
-            print("Forcing path to $_forcePath");
+            showGroup(recipientGroupUuid);
           }
           break;
-        case 'POST_LIKE':
-          {
-            final postSnowflakeId = message.data["postSnowflakeId"];
-            setState(() {
-              _forcePath = getSqueekPath(postSnowflakeId);
-            });
-            print("Forcing path to $_forcePath");
-          }
+        case NotificationType.PostLike:
+          showSqueek(message.data["postSnowflakeId"]);
           break;
-        case 'POST_REPLY':
-          {
-            final parentPostSnowflakeId = message.data["parentPostSnowflakeId"];
-            setState(() {
-              _forcePath = getSqueekPath(parentPostSnowflakeId);
-            });
-            print("Forcing path to $_forcePath");
-          }
+        case NotificationType.PostCorrection:
+          showSqueek(message.data["postSnowflakeId"]);
           break;
-        case 'POST_USER_MENTION':
-          {
-            final parentPostSnowflakeId = message.data["parentPostSnowflakeId"];
-            setState(() {
-              _forcePath = getSqueekPath(parentPostSnowflakeId);
-            });
-            print("Forcing path to $_forcePath");
-          }
+        case NotificationType.PostReply:
+          showSqueek(message.data["parentPostSnowflakeId"]);
+          break;
+        case NotificationType.PostUserMention:
+          showSqueek(message.data["parentPostSnowflakeId"]);
+          break;
+        case null:
           break;
       }
     });
