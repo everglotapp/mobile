@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/ui.dart';
-import 'package:everglot/webapp.dart';
+import 'package:everglot/routes/webapp.dart';
 import 'package:flutter/material.dart';
 import 'package:auth_buttons/auth_buttons.dart';
 import 'package:flutter/services.dart';
