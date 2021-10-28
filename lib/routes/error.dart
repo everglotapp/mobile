@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:everglot/utils/ui.dart';
+import 'package:flutter/material.dart';
 
 class ErrorPage extends StatelessWidget {
+  const ErrorPage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -12,7 +14,7 @@ class ErrorPage extends StatelessWidget {
                 child: Row(
                     mainAxisSize: MainAxisSize.max,
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                    children: const <Widget>[
                   Text("Error loading Everglot. Please restart the app.",
                       style: TextStyle(
                           color: Colors.white,

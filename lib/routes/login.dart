@@ -1,18 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:auth_buttons/auth_buttons.dart';
+import 'package:email_validator/email_validator.dart';
+import 'package:everglot/routes/webapp.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/ui.dart';
-import 'package:everglot/routes/webapp.dart';
 import 'package:flutter/material.dart';
-import 'package:auth_buttons/auth_buttons.dart';
 import 'package:flutter/services.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:email_validator/email_validator.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class LoginPageArguments {
   bool signedOut = false;
@@ -25,7 +25,7 @@ class LoginPage extends StatefulWidget {
   static const routeName = '/login';
 
   final String? forcePath;
-  LoginPage(this.forcePath);
+  const LoginPage(this.forcePath, {Key? key}) : super(key: key);
 
   @override
   LoginPageState createState() => LoginPageState();
@@ -33,7 +33,7 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   // GoogleSignInAccount? _currentUser;
-  GoogleSignIn _googleSignIn = GoogleSignIn(
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: getGoogleClientId(),
     scopes: <String>[
       'email',

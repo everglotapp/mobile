@@ -124,15 +124,15 @@ class _AppState extends State<App> {
     switch (settings.name) {
       case "/":
       case LoginPage.routeName:
-        builder = (BuildContext _) => new LoginPage(this._forcePath);
+        builder = (BuildContext _) => LoginPage(_forcePath);
         break;
       case WebAppContainer.routeName:
-        builder = (BuildContext _) => new WebAppContainer(this._forcePath);
+        builder = (BuildContext _) => WebAppContainer(_forcePath);
         break;
       default:
-        throw new Exception('Invalid route: ${settings.name}');
+        throw Exception('Invalid route: ${settings.name}');
     }
-    return new MaterialPageRoute(builder: builder, settings: settings);
+    return MaterialPageRoute(builder: builder, settings: settings);
   }
 
   @override
@@ -145,7 +145,7 @@ class _AppState extends State<App> {
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 print("Snapshot error");
-                return ErrorPage();
+                return const ErrorPage();
               }
 
               if (snapshot.connectionState == ConnectionState.done) {

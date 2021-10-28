@@ -82,16 +82,19 @@ Future<http.Response> tryEmailSignUp(String email, String password) async {
 
 Future<void> tryRegisterFcmToken(String fcmToken, String cookieHeader) async {
   final fcmTokenRegistrationUrl =
-      await getEverglotUrl(path: "/users/fcm-token/register/" + fcmToken);
-  http.post(Uri.parse(fcmTokenRegistrationUrl), headers: {
-    HttpHeaders.cookieHeader: cookieHeader
-  }).then((http.Response response) {
+      await getEverglotUrl(path: "/users/fcm-token/register/$fcmToken");
+  http.post(
+    Uri.parse(fcmTokenRegistrationUrl),
+    headers: {
+      HttpHeaders.cookieHeader: cookieHeader,
+    },
+  ).then((http.Response response) {
     final int statusCode = response.statusCode;
 
     if (statusCode == 200) {
       print("Successfully registered FCM token with Everglot!");
     } else {
-      print("Registering FCM token with Everglot failed: " + response.body);
+      print("Registering FCM token with Everglot failed: ${response.body}");
     }
   }).onError((error, stackTrace) {
     print('FCM token registration request produced an error');
@@ -107,7 +110,7 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
   final cookieManager = _getCookieManager();
   // set the expiration date for the cookie in milliseconds
   final defaultExpiryMs =
-      DateTime.now().add(Duration(hours: 1)).millisecondsSinceEpoch;
+      DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch;
 
   if (kDebugMode) {
     print("Setting session cookie: " + cookieHeader);

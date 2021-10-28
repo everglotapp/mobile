@@ -1,9 +1,10 @@
 import 'dart:io';
+
 import 'package:async/async.dart';
 import 'package:everglot/routes/login.dart';
 import 'package:everglot/utils/login.dart';
-import 'package:everglot/utils/webapp.dart';
 import 'package:everglot/utils/ui.dart';
+import 'package:everglot/utils/webapp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -20,7 +21,7 @@ class WebAppContainer extends StatefulWidget {
   static const routeName = '/webapp';
 
   final String? forcePath;
-  WebAppContainer(this.forcePath);
+  const WebAppContainer(this.forcePath, {Key? key}) : super(key: key);
 
   @override
   WebAppState createState() => WebAppState();
@@ -85,7 +86,7 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
     super.didUpdateWidget(oldWidget);
     final forcePath = widget.forcePath;
     if (forcePath != null &&
-        (forcePath != this._pathForced || forcePath != oldWidget.forcePath)) {
+        (forcePath != _pathForced || forcePath != oldWidget.forcePath)) {
       () async {
         if (_webViewController == null) {
           return;
@@ -124,12 +125,11 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
         future: _initialization,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Scaffold();
+            return const Scaffold();
           }
           if (snapshot.connectionState == ConnectionState.done) {
             final everglotBaseUrl = snapshot.data as String;
-            final initialPath =
-                widget.forcePath == null ? "/" : widget.forcePath;
+            final initialPath = widget.forcePath ?? "/";
             final initialUrl = "$everglotBaseUrl$initialPath";
             return Scaffold(
                 resizeToAvoidBottomInset: true,
@@ -239,15 +239,15 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                               pullToRefreshController.endRefreshing();
                             }
                             setState(() {
-                              urlController.text = this.url;
+                              urlController.text = url;
                             });
                           },
                           onUpdateVisitedHistory:
                               (controller, uri, androidIsReload) async {
-                            final url = uri.toString();
+                            final visitedUrl = uri.toString();
                             setState(() {
-                              this.url = url;
-                              urlController.text = this.url;
+                              url = visitedUrl;
+                              urlController.text = visitedUrl;
                             });
                             // Prevent /login and /join routes from showing.
                             if (url.startsWith(

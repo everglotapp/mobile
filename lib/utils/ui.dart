@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-Map<int, Color> colorCodes = {
+Map<int, Color> colorCodes = const {
   50: Color.fromRGBO(69, 180, 66, .1),
   100: Color.fromRGBO(69, 180, 66, .2),
   200: Color.fromRGBO(69, 180, 66, .3),
