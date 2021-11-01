@@ -89,7 +89,6 @@ class LoginPageState extends State<LoginPage> {
       });
       return;
     }
-    print(account);
     // Successfully logged in via Google.
     final authentication = await account.authentication;
     if (authentication.idToken == null) {
