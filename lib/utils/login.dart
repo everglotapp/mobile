@@ -98,7 +98,7 @@ Future<void> tryRegisterFcmToken(String fcmToken, String cookieHeader) async {
     }
   }).onError((error, stackTrace) {
     print('FCM token registration request produced an error');
-    return Future.value();
+    return Future.error("FCM token registration request produced an error");
   });
 }
 
@@ -130,7 +130,7 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
 }
 
 Future<inappwebview.Cookie?> getStoredSessionCookie(
-    {String name = EVERGLOT_SESSION_COOKIE_HEADER_NAME}) async {
+    {String name = everglotSessionIdCookieHeaderName}) async {
   final cookieManager = _getCookieManager();
 
   final url = await getEverglotUrl(path: "/login");
@@ -147,7 +147,7 @@ Future<inappwebview.Cookie?> getStoredSessionCookie(
 }
 
 Future<inappwebview.Cookie?> removeStoredSessionCookie(
-    {String name = EVERGLOT_SESSION_COOKIE_HEADER_NAME}) async {
+    {String name = everglotSessionIdCookieHeaderName}) async {
   final cookieManager = _getCookieManager();
 
   final url = await getEverglotUrl(path: "/login");

@@ -13,4 +13,4 @@ const EVERGLOT_SIGN_UP_TOKEN_IOS =
 const EVERGLOT_SIGN_UP_TOKEN_ANDROID =
     "35xMXbwHguV1KERp9jJ8CYiUbcXPNJtighC3oqwnATed";
 
-const EVERGLOT_SESSION_COOKIE_HEADER_NAME = "everglot_sid";
+const everglotSessionIdCookieHeaderName = "everglot_sid";

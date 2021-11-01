@@ -4,8 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:everglot/router.dart';
 import 'package:everglot/routes/login.dart';
-import 'package:everglot/routes/webapp.dart';
 import 'package:everglot/routes/error.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/webapp.dart';
@@ -15,6 +15,7 @@ import 'package:everglot/utils/notifications.dart';
 class App extends StatefulWidget {
   @override
   _AppState createState() => _AppState();
+  const App({Key? key}) : super(key: key);
 }
 
 class _AppState extends State<App> {
@@ -32,7 +33,7 @@ class _AppState extends State<App> {
 
   void goToGroup(String groupUuid) {
     if (!Uuid.isValidUUID(fromString: groupUuid)) {
-      print("showGroup: Invalid group UUID: $groupUuid");
+      print("goToGroup: Invalid group UUID: $groupUuid");
       return;
     }
     setState(() {
@@ -43,11 +44,22 @@ class _AppState extends State<App> {
 
   void goToSqueek(String snowflakeId) {
     if (BigInt.tryParse(snowflakeId) == null) {
-      print("showSqueek: Invalid snowflake ID: $snowflakeId");
+      print("goToSqueek: Invalid snowflake ID: $snowflakeId");
       return;
     }
     setState(() {
       _forcePath = getSqueekPath(snowflakeId);
+    });
+    print("Forcing path to $_forcePath");
+  }
+
+  void goToUserProfile(String username) {
+    if (username.isEmpty) {
+      print("goToUserProfile: Empty username: $username");
+      return;
+    }
+    setState(() {
+      _forcePath = getUserProfilePath(username);
     });
     print("Forcing path to $_forcePath");
   }
@@ -66,20 +78,23 @@ class _AppState extends State<App> {
       print(
           "User tapped on notification of type '$messageType' while app was in background");
       switch (notificationType) {
-        case NotificationType.GroupMessage:
+        case NotificationType.groupMessage:
           goToGroup(message.data["recipientGroupUuid"]);
           break;
-        case NotificationType.PostLike:
+        case NotificationType.postLike:
           goToSqueek(message.data["postSnowflakeId"]);
           break;
-        case NotificationType.PostCorrection:
+        case NotificationType.postCorrection:
           goToSqueek(message.data["postSnowflakeId"]);
           break;
-        case NotificationType.PostReply:
+        case NotificationType.postReply:
           goToSqueek(message.data["parentPostSnowflakeId"]);
           break;
-        case NotificationType.PostUserMention:
+        case NotificationType.postUserMention:
           goToSqueek(message.data["parentPostSnowflakeId"]);
+          break;
+        case NotificationType.userFollowership:
+          goToUserProfile(message.data["followerUsername"]);
           break;
         case null:
           break;
@@ -99,40 +114,27 @@ class _AppState extends State<App> {
     final notificationType = findNotificationType(messageType);
     print("App was started with a notification of type $messageType");
     switch (notificationType) {
-      case NotificationType.GroupMessage:
+      case NotificationType.groupMessage:
         goToGroup(initialMessage.data["recipientGroupUuid"]);
         break;
-      case NotificationType.PostLike:
+      case NotificationType.postLike:
         goToSqueek(initialMessage.data["postSnowflakeId"]);
         break;
-      case NotificationType.PostCorrection:
+      case NotificationType.postCorrection:
         goToSqueek(initialMessage.data["postSnowflakeId"]);
         break;
-      case NotificationType.PostReply:
+      case NotificationType.postReply:
         goToSqueek(initialMessage.data["parentPostSnowflakeId"]);
         break;
-      case NotificationType.PostUserMention:
+      case NotificationType.postUserMention:
         goToSqueek(initialMessage.data["parentPostSnowflakeId"]);
+        break;
+      case NotificationType.userFollowership:
+        goToUserProfile(initialMessage.data["followerUsername"]);
         break;
       case null:
         break;
     }
-  }
-
-  Route<dynamic> _generateRoute(RouteSettings settings) {
-    WidgetBuilder builder;
-    switch (settings.name) {
-      case "/":
-      case LoginPage.routeName:
-        builder = (BuildContext _) => LoginPage(_forcePath);
-        break;
-      case WebAppContainer.routeName:
-        builder = (BuildContext _) => WebAppContainer(_forcePath);
-        break;
-      default:
-        throw Exception('Invalid route: ${settings.name}');
-    }
-    return MaterialPageRoute(builder: builder, settings: settings);
   }
 
   @override
@@ -168,7 +170,7 @@ class _AppState extends State<App> {
                     fontFamily: "Noto",
                   ),
                   initialRoute: LoginPage.routeName,
-                  onGenerateRoute: _generateRoute,
+                  onGenerateRoute: EverglotRouter.generateRoute,
                 );
               }
 

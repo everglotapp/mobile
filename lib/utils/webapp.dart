@@ -26,6 +26,10 @@ String getSqueekPath(String snowflakeId) {
   return "/s/$snowflakeId";
 }
 
+String getUserProfilePath(String username) {
+  return "/u/$username";
+}
+
 String getWebviewUserAgent() {
   if (Platform.isAndroid) {
     return "ANDROID_WEBVIEW";

@@ -12,9 +12,9 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WebAppArguments {
-  String forcePath = "";
+  String? forcePath;
 
-  WebAppArguments(this.forcePath);
+  WebAppArguments({this.forcePath});
 }
 
 class WebAppContainer extends StatefulWidget {
@@ -29,7 +29,7 @@ class WebAppContainer extends StatefulWidget {
 
 class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
   final Future<String> _initialization = getEverglotUrl(path: "");
-  final GlobalKey webViewKey = GlobalKey();
+  final GlobalKey _webViewKey = GlobalKey();
   InAppWebViewController? _webViewController;
   InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
       crossPlatform: InAppWebViewOptions(
@@ -114,9 +114,9 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    super.dispose();
     allowMinimizeAppTimer?.cancel();
     allowMinimizeAppTimer = null;
+    super.dispose();
   }
 
   @override
@@ -125,152 +125,148 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
         future: _initialization,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Scaffold();
+            return Scaffold(key: UniqueKey());
           }
-          if (snapshot.connectionState == ConnectionState.done) {
-            final everglotBaseUrl = snapshot.data as String;
-            final initialPath = widget.forcePath ?? "/";
-            final initialUrl = "$everglotBaseUrl$initialPath";
-            return Scaffold(
-                resizeToAvoidBottomInset: true,
-                body: SafeArea(
-                    child: WillPopScope(
-                        onWillPop: () async {
-                          if (_webViewController != null) {
-                            if (await _webViewController!.canGoBack()) {
-                              _webViewController?.goBack();
-                              return false;
-                            }
+          if (snapshot.connectionState != ConnectionState.done) {
+            return Scaffold(key: UniqueKey());
+          }
+          final everglotBaseUrl = snapshot.data as String;
+          final initialPath = widget.forcePath ?? "/";
+          final initialUrl = "$everglotBaseUrl$initialPath";
+          return SafeArea(
+              child: Scaffold(
+                  resizeToAvoidBottomInset: true,
+                  body: WillPopScope(
+                      onWillPop: () async {
+                        if (_webViewController != null) {
+                          if (await _webViewController!.canGoBack()) {
+                            _webViewController?.goBack();
+                            return false;
                           }
-                          final scaffoldMessenger =
-                              ScaffoldMessenger.of(context);
-                          if (allowMinimizeApp) {
-                            allowMinimizeAppTimer?.cancel();
-                            scaffoldMessenger.hideCurrentSnackBar();
-                            await SystemChannels.platform
-                                .invokeMethod('SystemNavigator.pop');
-                            return true;
-                          }
-                          allowMinimizeApp = true;
-                          allowMinimizeAppTimer?.reset();
+                        }
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        if (allowMinimizeApp) {
+                          allowMinimizeAppTimer?.cancel();
                           scaffoldMessenger.hideCurrentSnackBar();
-                          scaffoldMessenger.showSnackBar(snackBar);
-                          return false;
+                          await SystemChannels.platform
+                              .invokeMethod('SystemNavigator.pop');
+                          return true;
+                        }
+                        allowMinimizeApp = true;
+                        allowMinimizeAppTimer?.reset();
+                        scaffoldMessenger.hideCurrentSnackBar();
+                        scaffoldMessenger.showSnackBar(snackBar);
+                        return false;
+                      },
+                      child: InAppWebView(
+                        key: _webViewKey,
+                        initialUrlRequest:
+                            URLRequest(url: Uri.parse(initialUrl)),
+                        initialOptions: options,
+                        pullToRefreshController: pullToRefreshController,
+                        onWebViewCreated: (controller) async {
+                          _webViewController = controller;
+                          await Future.delayed(Duration.zero);
+                          final args = ModalRoute.of(context)!
+                              .settings
+                              .arguments as WebAppArguments?;
+                          if (args != null && args.forcePath != null) {
+                            final path = args.forcePath as String;
+                            _pathForced = path;
+                            controller.loadUrl(
+                                urlRequest: URLRequest(
+                                    url: Uri.parse(
+                                        await getEverglotUrl(path: path))));
+                          }
                         },
-                        child: InAppWebView(
-                          key: webViewKey,
-                          initialUrlRequest:
-                              URLRequest(url: Uri.parse(initialUrl)),
-                          initialOptions: options,
-                          pullToRefreshController: pullToRefreshController,
-                          onWebViewCreated: (controller) async {
-                            _webViewController = controller;
-                            await Future.delayed(Duration.zero);
-                            final args = ModalRoute.of(context)!
-                                .settings
-                                .arguments as WebAppArguments?;
-                            if (args != null && args.forcePath.isNotEmpty) {
-                              final path = args.forcePath;
-                              _pathForced = path;
-                              controller.loadUrl(
-                                  urlRequest: URLRequest(
-                                      url: Uri.parse(
-                                          await getEverglotUrl(path: path))));
-                            }
-                          },
-                          onLoadStart: (controller, url) {
-                            setState(() {
-                              this.url = url.toString();
-                              urlController.text = this.url;
-                            });
-                          },
-                          androidOnPermissionRequest:
-                              (controller, origin, resources) async {
-                            return PermissionRequestResponse(
-                                resources: resources,
-                                action: PermissionRequestResponseAction.GRANT);
-                          },
-                          shouldOverrideUrlLoading:
-                              (controller, navigationAction) async {
-                            final uri = navigationAction.request.url!;
-                            final url = uri.toString();
-                            if (![
-                              "http",
-                              "https",
-                            ].contains(uri.scheme)) {
-                              if (await canLaunch(url)) {
-                                // Launch the App
-                                await launch(
-                                  url,
-                                );
-                                // and cancel the request
-                                return NavigationActionPolicy.CANCEL;
-                              }
-                            }
-
-                            // Forbid non-Everglot URLs.
-                            if (!url
-                                .startsWith(await getEverglotUrl(path: ""))) {
-                              if (url
-                                  .startsWith("https://survey.everglot.com/")) {
-                                // Launch survey links externally.
-                                await launch(
-                                  url,
-                                );
-                              }
+                        onLoadStart: (controller, url) {
+                          setState(() {
+                            this.url = url.toString();
+                            urlController.text = this.url;
+                          });
+                        },
+                        androidOnPermissionRequest:
+                            (controller, origin, resources) async {
+                          return PermissionRequestResponse(
+                              resources: resources,
+                              action: PermissionRequestResponseAction.GRANT);
+                        },
+                        shouldOverrideUrlLoading:
+                            (controller, navigationAction) async {
+                          final uri = navigationAction.request.url!;
+                          final url = uri.toString();
+                          if (![
+                            "http",
+                            "https",
+                          ].contains(uri.scheme)) {
+                            if (await canLaunch(url)) {
+                              // Launch the App
+                              await launch(url);
+                              // and cancel the request
                               return NavigationActionPolicy.CANCEL;
                             }
+                          }
 
-                            return NavigationActionPolicy.ALLOW;
-                          },
-                          onLoadStop: (controller, uri) async {
-                            pullToRefreshController.endRefreshing();
-                            final url = uri.toString();
-                            setState(() {
-                              this.url = url;
-                              urlController.text = this.url;
-                            });
-                          },
-                          onLoadError: (controller, url, code, message) {
-                            pullToRefreshController.endRefreshing();
-                          },
-                          onProgressChanged: (controller, progress) {
-                            if (progress == 100) {
-                              pullToRefreshController.endRefreshing();
+                          // Forbid non-Everglot URLs.
+                          if (!url.startsWith(await getEverglotUrl(path: ""))) {
+                            if (url
+                                .startsWith("https://survey.everglot.com/")) {
+                              // Launch survey links externally.
+                              await launch(
+                                url,
+                              );
                             }
-                            setState(() {
-                              urlController.text = url;
-                            });
-                          },
-                          onUpdateVisitedHistory:
-                              (controller, uri, androidIsReload) async {
-                            final visitedUrl = uri.toString();
-                            setState(() {
-                              url = visitedUrl;
-                              urlController.text = visitedUrl;
-                            });
-                            // Prevent /login and /join routes from showing.
-                            if (url.startsWith(
-                                    await getEverglotUrl(path: "/join")) ||
-                                url.startsWith(
-                                    await getEverglotUrl(path: "/login"))) {
-                              print(
-                                  "Logged out state detected, switching to login screen and removing stored cookie");
-                              await removeStoredSessionCookie();
+                            return NavigationActionPolicy.CANCEL;
+                          }
 
-                              await Navigator.popAndPushNamed(
-                                  context, LoginPage.routeName,
-                                  arguments:
-                                      LoginPageArguments(true, uri!.path));
-                            }
-                            print("Visited URL: $url");
-                          },
-                          onConsoleMessage: (controller, consoleMessage) {
-                            print(consoleMessage);
-                          },
-                        ))));
-          }
-          return Scaffold();
+                          return NavigationActionPolicy.ALLOW;
+                        },
+                        onLoadStop: (controller, uri) async {
+                          pullToRefreshController.endRefreshing();
+                          final url = uri.toString();
+                          setState(() {
+                            this.url = url;
+                            urlController.text = this.url;
+                          });
+                        },
+                        onLoadError: (controller, url, code, message) {
+                          pullToRefreshController.endRefreshing();
+                        },
+                        onProgressChanged: (controller, progress) {
+                          if (progress == 100) {
+                            pullToRefreshController.endRefreshing();
+                          }
+                          setState(() {
+                            urlController.text = url;
+                          });
+                        },
+                        onUpdateVisitedHistory:
+                            (controller, uri, androidIsReload) async {
+                          final visitedUrl = uri.toString();
+                          setState(() {
+                            url = visitedUrl;
+                            urlController.text = visitedUrl;
+                          });
+                          // Prevent /login and /join routes from showing.
+                          if (url.startsWith(
+                                  await getEverglotUrl(path: "/join")) ||
+                              url.startsWith(
+                                  await getEverglotUrl(path: "/login"))) {
+                            print(
+                                "Logged out state detected, switching to login screen and removing stored cookie");
+                            await removeStoredSessionCookie();
+
+                            await Navigator.popAndPushNamed(
+                                context, LoginPage.routeName,
+                                arguments: LoginPageArguments(
+                                    signedOut: true, forcePath: uri!.path));
+                          }
+                          print("Visited URL: $url");
+                        },
+                        onConsoleMessage: (controller, consoleMessage) {
+                          print(consoleMessage);
+                        },
+                      ))));
         });
   }
 }

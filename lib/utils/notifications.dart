@@ -2,25 +2,28 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 
 enum NotificationType {
-  PostReply,
-  PostLike,
-  PostCorrection,
-  PostUserMention,
-  GroupMessage
+  postReply,
+  postLike,
+  postCorrection,
+  postUserMention,
+  groupMessage,
+  userFollowership
 }
 
 NotificationType? findNotificationType(String type) {
   switch (type) {
     case 'POST_REPLY':
-      return NotificationType.PostReply;
+      return NotificationType.postReply;
     case "POST_LIKE":
-      return NotificationType.PostLike;
+      return NotificationType.postLike;
     case "POST_CORRECTION":
-      return NotificationType.PostCorrection;
+      return NotificationType.postCorrection;
     case "POST_USER_MENTION":
-      return NotificationType.PostUserMention;
+      return NotificationType.postUserMention;
     case "GROUP_MESSAGE":
-      return NotificationType.GroupMessage;
+      return NotificationType.groupMessage;
+    case "USER_FOLLOWERSHIP":
+      return NotificationType.userFollowership;
   }
 }
 
@@ -43,12 +46,11 @@ Future<String?> getFcmToken() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   if (!Platform.isAndroid) {
-    NotificationSettings _settings =
-        await _tryGetNotificationPermission(messaging);
+    await _tryGetNotificationPermission(messaging);
     // print("Notifications authorized?" +
     //     (String)_settings.authorizationStatus);
-    // settings.authorizationStatus == AuthorizationStatus.authorized;
-    _settings = _settings;
+    // if (_settings.authorizationStatus == AuthorizationStatus.authorized) {
+    // }
   }
   String? token = await messaging.getToken();
   if (token != null) {
