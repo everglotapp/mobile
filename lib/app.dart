@@ -168,6 +168,7 @@ class _AppState extends State<App> {
                     // is not restarted.
                     primarySwatch: primaryColor,
                     fontFamily: "Noto",
+                    scaffoldBackgroundColor: Colors.white,
                   ),
                   initialRoute: LoginPage.routeName,
                   onGenerateRoute: EverglotRouter.generateRoute,

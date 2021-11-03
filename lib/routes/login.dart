@@ -64,14 +64,10 @@ class LoginPageState extends State<LoginPage> {
 
     _messaging = Provider.of<Messaging>(context, listen: false);
     _transitioningToWebapp = false;
-
-    SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom]);
   }
 
   @override
   void dispose() {
-    SystemChrome.setEnabledSystemUIOverlays(
-        [SystemUiOverlay.top, SystemUiOverlay.bottom]);
     _emailController.dispose();
     _passwordController.dispose();
     _onCurrentUserChangedSubscription.cancel();
