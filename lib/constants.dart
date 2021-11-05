@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 const GOOGLE_CLIENT_ID_IOS =
     "457984069949-79sdutia34vvkn2fcetcq1sblmhe38gk.apps.googleusercontent.com";
 const GOOGLE_CLIENT_ID_ANDROID =
@@ -13,4 +15,8 @@ const EVERGLOT_SIGN_UP_TOKEN_IOS =
 const EVERGLOT_SIGN_UP_TOKEN_ANDROID =
     "35xMXbwHguV1KERp9jJ8CYiUbcXPNJtighC3oqwnATed";
 
-const everglotSessionIdCookieHeaderName = "everglot_sid";
+const everglotSessionIdCookieHeaderNameSuffix = "everglot_sid";
+// __Host- prefix requires HTTPS which we don't want to enforce in dev
+const everglotSessionIdCookieHeaderName = kDebugMode
+    ? everglotSessionIdCookieHeaderNameSuffix
+    : "__Host-$everglotSessionIdCookieHeaderNameSuffix";
