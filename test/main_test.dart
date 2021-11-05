@@ -7,12 +7,12 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:everglot/main.dart';
+import 'package:everglot/app.dart';
 
 void main() {
   testWidgets('Splash screen', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(App());
+    await tester.pumpWidget(const App());
     // Verify that there is a button
     expect(find.text('Everglot'), findsOneWidget);
   });

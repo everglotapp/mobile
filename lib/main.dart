@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:everglot/app.dart';
 import 'package:everglot/jobs/dispatcher.dart';
+import 'package:everglot/jobs/sync_fcm_token.dart';
 import 'package:everglot/jobs/types.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -55,7 +56,7 @@ void registerFcmTokenSyncTask() {
     Workmanager().registerPeriodicTask(
       "SYNC_FCM_TOKEN",
       jobTypes[JobType.syncFcmToken]!,
-      frequency: const Duration(days: 2),
+      frequency: const Duration(days: 7),
       constraints: Constraints(
         // connected or metered mark the task as requiring internet
         networkType: NetworkType.connected,
@@ -68,7 +69,7 @@ void registerFcmTokenSyncTask() {
     Workmanager().registerOneOffTask(
       "SYNC_FCM_TOKEN", // Ignored on iOS
       jobTypes[JobType.syncFcmToken]!, // Ignored on iOS
-      initialDelay: const Duration(days: 2),
+      initialDelay: const Duration(days: 7),
       constraints: Constraints(
         // connected or metered mark the task as requiring internet
         networkType: NetworkType.connected,

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:async/async.dart';
@@ -6,6 +7,7 @@ import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/ui.dart';
 import 'package:everglot/utils/webapp.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
@@ -34,6 +36,7 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
   InAppWebViewGroupOptions options = InAppWebViewGroupOptions(
       crossPlatform: InAppWebViewOptions(
           useShouldOverrideUrlLoading: true,
+          useShouldInterceptFetchRequest: true,
           mediaPlaybackRequiresUserGesture: false,
           userAgent: getWebviewUserAgent(),
           supportZoom: false),
@@ -191,6 +194,26 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                               resources: resources,
                               action: PermissionRequestResponseAction.GRANT);
                         },
+                        shouldInterceptFetchRequest:
+                            (controller, request) async {
+                          final uri = request.url;
+                          final url = uri.toString();
+                          if (url.startsWith(
+                                  await getEverglotUrl(path: "/logout")) ||
+                              url.startsWith("/logout")) {
+                            final refreshToken = await getRefreshToken();
+                            if (refreshToken != null) {
+                              request.body =
+                                  jsonEncode({"refreshToken": refreshToken});
+                              if (kDebugMode) {
+                                print(
+                                    "Intercepting logout to add refreshToken to be invalidated, refreshToken: $refreshToken");
+                              }
+                              return request;
+                            }
+                          }
+                          return request;
+                        },
                         shouldOverrideUrlLoading:
                             (controller, navigationAction) async {
                           final uri = navigationAction.request.url!;
@@ -206,7 +229,6 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                               return NavigationActionPolicy.CANCEL;
                             }
                           }
-
                           // Forbid non-Everglot URLs.
                           if (!url.startsWith(await getEverglotUrl(path: ""))) {
                             if (url

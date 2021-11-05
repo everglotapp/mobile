@@ -1,24 +1,97 @@
 import 'package:everglot/constants.dart';
+import 'package:everglot/jobs/types.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
+import 'package:jwt_decoder/jwt_decoder.dart';
+
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:workmanager/workmanager.dart';
 
 Future<bool> syncFcmToken(dynamic inputData) async {
   await Firebase.initializeApp();
+  final refreshToken = await getRefreshToken();
+  if (refreshToken == null) {
+    if (kDebugMode) {
+      print("No refresh token, app has probably never signed in");
+    }
+    scheduleNextIOSJob();
+    return true;
+  }
+  try {
+    if (JwtDecoder.isExpired(refreshToken)) {
+      if (kDebugMode) {
+        print(
+            "Refresh token has expired, cannot use it to synchronize FCM token");
+      }
+      scheduleNextIOSJob();
+      return true;
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print(
+          "Failed to check if refresh token has expired, it seems to not even be a valid JWT.");
+    }
+
+    scheduleNextIOSJob();
+    return true;
+  }
+
+  if (!await reauthenticate(refreshToken)) {
+    if (kDebugMode) {
+      print(
+          "Reauthentication failed, FCM token synchronization is impossible.");
+    }
+
+    scheduleNextIOSJob();
+    return false;
+  }
+
   final fcmToken = await getFcmToken();
   if (fcmToken == null || fcmToken.isEmpty) {
-    // Device has no FCM token, refresh is impossible.
-    return true;
+    if (kDebugMode) {
+      print("Device has no FCM token, synchronization is impossible.");
+    }
+    scheduleNextIOSJob();
+    return false;
   }
   final sessionIdCookie = await getStoredSessionCookie();
   if (sessionIdCookie == null) {
-    // Client can't possibly be signed in, refresh is impossible.
-    return true;
+    print(
+        "Could not get session ID even though just reauthenticated, FCM token synchronization is impossible.");
+    scheduleNextIOSJob();
+    return false;
   }
-  await tryRegisterFcmToken(fcmToken,
-          "$everglotSessionIdCookieHeaderName=${sessionIdCookie.value}")
-      .catchError((e) {
-    print(e);
-  });
+  try {
+    if (kDebugMode) {
+      print("Synchronizing FCM token after successful refresh authentication");
+    }
+    await tryRegisterFcmToken(fcmToken,
+        "$everglotSessionIdCookieHeaderName=${sessionIdCookie.value}");
+  } catch (e) {
+    if (kDebugMode) {
+      print("Error during FCM token registration: $e");
+    }
+    scheduleNextIOSJob();
+    return false;
+  }
+  scheduleNextIOSJob();
   return true;
+}
+
+void scheduleNextIOSJob() {
+  if (Platform.isIOS) {
+    Workmanager().registerOneOffTask(
+      "SYNC_FCM_TOKEN", // Ignored on iOS
+      jobTypes[JobType.syncFcmToken]!, // Ignored on iOS
+      initialDelay: const Duration(days: 7),
+      constraints: Constraints(
+        // connected or metered mark the task as requiring internet
+        networkType: NetworkType.connected,
+        // do not require external power
+        requiresCharging: false,
+      ),
+    );
+  }
 }

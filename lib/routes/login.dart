@@ -10,6 +10,7 @@ import 'package:everglot/routes/webapp.dart';
 import 'package:everglot/state/messaging.dart';
 import 'package:everglot/utils/login.dart';
 import 'package:everglot/utils/ui.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -118,6 +119,12 @@ class LoginPageState extends State<LoginPage> {
               print(e);
             });
             await registerSessionCookie(cookieHeader, response.request!.url);
+            if (jsonResponse["refreshToken"] is String) {
+              final refreshToken = jsonResponse["refreshToken"] as String;
+              if (refreshToken.isNotEmpty) {
+                await registerRefreshToken(refreshToken);
+              }
+            }
             final transitionFuture = _transitionToWebApp();
             setState(() {
               _triedAutoSignIn = true;
@@ -139,10 +146,14 @@ class LoginPageState extends State<LoginPage> {
       setState(() {
         _triedAutoSignIn = true;
       });
-      print("Signing into Everglot failed: " + response.body);
+      if (kDebugMode) {
+        print("Signing into Everglot failed: " + response.body);
+      }
     }).onError((error, stackTrace) {
-      print('Login request produced an error: ' + error.toString());
-      print(stackTrace);
+      if (kDebugMode) {
+        print('Login request produced an error: ' + error.toString());
+        print(stackTrace);
+      }
 
       setState(() {
         _triedAutoSignIn = true;
@@ -236,6 +247,12 @@ class LoginPageState extends State<LoginPage> {
               print(e);
             });
             await registerSessionCookie(cookieHeader, response.request!.url);
+            if (jsonResponse["refreshToken"] is String) {
+              final refreshToken = jsonResponse["refreshToken"] as String;
+              if (refreshToken.isNotEmpty) {
+                await registerRefreshToken(refreshToken);
+              }
+            }
             await _transitionToWebApp();
             return;
           }

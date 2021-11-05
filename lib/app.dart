@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -33,7 +34,9 @@ class _AppState extends State<App> {
 
   void goToGroup(String groupUuid) {
     if (!Uuid.isValidUUID(fromString: groupUuid)) {
-      print("goToGroup: Invalid group UUID: $groupUuid");
+      if (kDebugMode) {
+        print("goToGroup: Invalid group UUID: $groupUuid");
+      }
       return;
     }
     setState(() {
@@ -44,7 +47,9 @@ class _AppState extends State<App> {
 
   void goToSqueek(String snowflakeId) {
     if (BigInt.tryParse(snowflakeId) == null) {
-      print("goToSqueek: Invalid snowflake ID: $snowflakeId");
+      if (kDebugMode) {
+        print("goToSqueek: Invalid snowflake ID: $snowflakeId");
+      }
       return;
     }
     setState(() {
@@ -55,7 +60,9 @@ class _AppState extends State<App> {
 
   void goToUserProfile(String username) {
     if (username.isEmpty) {
-      print("goToUserProfile: Empty username: $username");
+      if (kDebugMode) {
+        print("goToUserProfile: Empty username: $username");
+      }
       return;
     }
     setState(() {
@@ -69,14 +76,18 @@ class _AppState extends State<App> {
     // Stream listener
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) async {
       if (message.data['type'] == null) {
-        print(
-            "User tapped on notification of an unknown type while app was in background");
+        if (kDebugMode) {
+          print(
+              "User tapped on notification of an unknown type while app was in background");
+        }
         return;
       }
       final messageType = message.data['type'];
       final notificationType = findNotificationType(messageType);
-      print(
-          "User tapped on notification of type '$messageType' while app was in background");
+      if (kDebugMode) {
+        print(
+            "User tapped on notification of type '$messageType' while app was in background");
+      }
       switch (notificationType) {
         case NotificationType.groupMessage:
           goToGroup(message.data["recipientGroupUuid"]);
@@ -112,7 +123,9 @@ class _AppState extends State<App> {
 
     final messageType = initialMessage.data['type'];
     final notificationType = findNotificationType(messageType);
-    print("App was started with a notification of type $messageType");
+    if (kDebugMode) {
+      print("App was started with a notification of type $messageType");
+    }
     switch (notificationType) {
       case NotificationType.groupMessage:
         goToGroup(initialMessage.data["recipientGroupUuid"]);
@@ -146,12 +159,16 @@ class _AppState extends State<App> {
             future: _initialization,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                print("Snapshot error");
+                if (kDebugMode) {
+                  print("Snapshot error");
+                }
                 return const ErrorPage();
               }
 
               if (snapshot.connectionState == ConnectionState.done) {
-                print("Loaded Firebase app successfully, rendering Everglot");
+                if (kDebugMode) {
+                  print("Loaded Firebase app successfully, rendering Everglot");
+                }
 
                 return MaterialApp(
                   title: 'Everglot',
@@ -175,7 +192,9 @@ class _AppState extends State<App> {
                 );
               }
 
-              print("Loading FirebaseApp …");
+              if (kDebugMode) {
+                print("Loading FirebaseApp …");
+              }
               return MaterialApp(
                   title: 'Everglot',
                   theme: ThemeData(
