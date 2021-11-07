@@ -169,7 +169,7 @@ Future<inappwebview.Cookie?> getStoredSessionCookie(
   return cookie;
 }
 
-Future<inappwebview.Cookie?> removeStoredSessionCookie(
+Future<void> removeStoredSessionCookie(
     {String name = everglotSessionIdCookieHeaderName}) async {
   final cookieManager = _getCookieManager();
 

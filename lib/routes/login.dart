@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:provider/provider.dart';
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -170,12 +171,39 @@ class LoginPageState extends State<LoginPage> {
       // Automatically sign out from Google as user just signed out from app.
       await _googleSignIn.signOut();
       // Unset any stored session cookie to prevent sign in upon app restart.
-      removeStoredSessionCookie();
+      await removeStoredSessionCookie();
       return true;
     }
     /**
      * Try all possible ways to automatically sign the user into the app.
      */
+    final refreshToken = await getRefreshToken();
+    if (refreshToken == null) {
+      if (kDebugMode) {
+        print(
+            "Cannot reauth via refresh token no refresh token could be retrieved");
+      }
+    } else {
+      if (JwtDecoder.isExpired(refreshToken)) {
+        if (kDebugMode) {
+          print(
+              "Reauth via refresh token cancelled as refresh token has expired");
+        }
+      } else {
+        final reauthedSuccessfully = await reauthenticate(refreshToken);
+        if (reauthedSuccessfully) {
+          if (kDebugMode) {
+            print("Reauth via refresh token worked, moving to webapp route");
+          }
+          final transitionFuture = _transitionToWebApp();
+          setState(() {
+            _triedAutoSignIn = true;
+          });
+          await transitionFuture;
+          return true;
+        }
+      }
+    }
     try {
       final googleAccount = await _googleSignIn.signInSilently();
       if (googleAccount != null) {
@@ -184,18 +212,6 @@ class LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       print("Automatic silent Google sign in failed: $e");
-    }
-    // Check if already signed in with stored session ID cookie.
-    final sessionIdCookie = await getStoredSessionCookie();
-    if (sessionIdCookie != null) {
-      // TODO: Check if sessionIdCookie is expired (cannot check on Android).
-      // i.e. abort if sessionIdCookie.expiresAt <= now
-      print("Session cookie header exists, moving to webapp route");
-      await _transitionToWebApp();
-      setState(() {
-        _triedAutoSignIn = true;
-      });
-      return true;
     }
     setState(() {
       _triedAutoSignIn = true;
