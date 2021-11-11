@@ -209,6 +209,8 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                                 debugPrint(
                                     "Intercepting logout to add refreshToken to be invalidated, refreshToken: $refreshToken");
                               }
+                              // Prevent token from being sent again as it's about to be invalidated.
+                              removeRefreshToken();
                               return request;
                             }
                           }

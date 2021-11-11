@@ -154,7 +154,7 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
 }
 
 Future<inappwebview.Cookie?> getStoredSessionCookie(
-    {String name = EverglotSessionIdCookie.headerName}) async {
+    {String name = EverglotSessionIdCookie.name}) async {
   final cookieManager = _getCookieManager();
 
   final url = await getEverglotUrl(path: "/login");
@@ -172,7 +172,7 @@ Future<inappwebview.Cookie?> getStoredSessionCookie(
 }
 
 Future<void> removeStoredSessionCookie(
-    {String name = EverglotSessionIdCookie.headerName}) async {
+    {String name = EverglotSessionIdCookie.name}) async {
   final cookieManager = _getCookieManager();
 
   final url = await getEverglotUrl(path: "/login");
