@@ -1,6 +1,8 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 enum NotificationType {
   postReply,
   postLike,
@@ -38,7 +40,7 @@ Future<NotificationSettings> _tryGetNotificationPermission(
     provisional: false,
     sound: true,
   );
-  print('User granted permission: ${settings.authorizationStatus}');
+  debugPrint('User granted permission: ${settings.authorizationStatus}');
   return settings;
 }
 
@@ -47,27 +49,28 @@ Future<String?> getFcmToken() async {
 
   if (!Platform.isAndroid) {
     await _tryGetNotificationPermission(messaging);
-    // print("Notifications authorized?" +
+    // debugPrint("Notifications authorized?" +
     //     (String)_settings.authorizationStatus);
     // if (_settings.authorizationStatus == AuthorizationStatus.authorized) {
     // }
   }
   String? token = await messaging.getToken();
   if (token != null) {
-    print("Got FCM token $token");
+    debugPrint("Got FCM token $token");
   } else {
-    print("Failed to get FCM token");
+    debugPrint("Failed to get FCM token");
   }
   return token;
 }
 
 listenForeground() {
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print('Got a message whilst in the foreground!');
-    print('Message data: ${message.data}');
+    debugPrint('Got a message whilst in the foreground!');
+    debugPrint('Message data: ${message.data}');
 
     if (message.notification != null) {
-      print('Message also contained a notification: ${message.notification}');
+      debugPrint(
+          'Message also contained a notification: ${message.notification}');
     }
   });
 }

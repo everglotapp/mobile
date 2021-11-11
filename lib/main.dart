@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:everglot/app.dart';
 import 'package:everglot/jobs/dispatcher.dart';
-import 'package:everglot/jobs/sync_fcm_token.dart';
 import 'package:everglot/jobs/types.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -48,7 +47,7 @@ void main() async {
 Future<void> _handleBackgroundMessage(RemoteMessage message) async {
   await Firebase.initializeApp();
 
-  print("Handling a background message: ${message.messageId}");
+  debugPrint("Handling a background message: ${message.messageId}");
 }
 
 void registerFcmTokenSyncTask() {
@@ -65,7 +64,6 @@ void registerFcmTokenSyncTask() {
       ),
     );
   } else if (Platform.isIOS) {
-    // TODO: Figure out what this duration should be and how to figure it out
     Workmanager().registerOneOffTask(
       "SYNC_FCM_TOKEN", // Ignored on iOS
       jobTypes[JobType.syncFcmToken]!, // Ignored on iOS

@@ -81,7 +81,7 @@ class LoginPageState extends State<LoginPage> {
     //   _currentUser = account;
     // });
     if (account == null) {
-      print("null account");
+      debugPrint("null account");
       setState(() {
         _triedAutoSignIn = true;
       });
@@ -112,12 +112,12 @@ class LoginPageState extends State<LoginPage> {
         if (jsonResponse != null && jsonResponse["success"] == true) {
           final cookieHeader = response.headers[HttpHeaders.setCookieHeader];
           if (cookieHeader == null) {
-            print("Something went wrong, cannot get session cookie.");
+            debugPrint("Something went wrong, cannot get session cookie.");
           } else {
-            print(
+            debugPrint(
                 "Signed in to Everglot via Google. Will now try to register FCM token.");
             tryRegisterFcmToken(fcmToken, cookieHeader).catchError((e) {
-              print(e);
+              debugPrint(e);
             });
             await registerSessionCookie(cookieHeader, response.request!.url);
             if (jsonResponse["refreshToken"] is String) {
@@ -148,12 +148,12 @@ class LoginPageState extends State<LoginPage> {
         _triedAutoSignIn = true;
       });
       if (kDebugMode) {
-        print("Signing into Everglot failed: " + response.body);
+        debugPrint("Signing into Everglot failed: " + response.body);
       }
     }).onError((error, stackTrace) {
       if (kDebugMode) {
-        print('Login request produced an error: ' + error.toString());
-        print(stackTrace);
+        debugPrint('Login request produced an error: ' + error.toString());
+        debugPrint(stackTrace.toString());
       }
 
       setState(() {
@@ -180,20 +180,21 @@ class LoginPageState extends State<LoginPage> {
     final refreshToken = await getRefreshToken();
     if (refreshToken == null) {
       if (kDebugMode) {
-        print(
+        debugPrint(
             "Cannot reauth via refresh token no refresh token could be retrieved");
       }
     } else {
       if (JwtDecoder.isExpired(refreshToken)) {
         if (kDebugMode) {
-          print(
+          debugPrint(
               "Reauth via refresh token cancelled as refresh token has expired");
         }
       } else {
         final reauthedSuccessfully = await reauthenticate(refreshToken);
         if (reauthedSuccessfully) {
           if (kDebugMode) {
-            print("Reauth via refresh token worked, moving to webapp route");
+            debugPrint(
+                "Reauth via refresh token worked, moving to webapp route");
           }
           final transitionFuture = _transitionToWebApp();
           setState(() {
@@ -211,7 +212,7 @@ class LoginPageState extends State<LoginPage> {
         return true;
       }
     } catch (e) {
-      print("Automatic silent Google sign in failed: $e");
+      debugPrint("Automatic silent Google sign in failed: $e");
     }
     setState(() {
       _triedAutoSignIn = true;
@@ -229,7 +230,7 @@ class LoginPageState extends State<LoginPage> {
       }
       await _googleSignIn.signIn();
     } catch (error) {
-      print("Google sign in failed: " + error.toString());
+      debugPrint("Google sign in failed: " + error.toString());
     }
   }
 
@@ -254,13 +255,13 @@ class LoginPageState extends State<LoginPage> {
         if (jsonResponse != null && jsonResponse["success"] == true) {
           final cookieHeader = response.headers[HttpHeaders.setCookieHeader];
           if (cookieHeader == null) {
-            print("Something went wrong, cannot get session cookie.");
+            debugPrint("Something went wrong, cannot get session cookie.");
           } else {
-            print(
+            debugPrint(
                 "Successfully signed in to Everglot via email. Will now try to register FCM token.");
             tryRegisterFcmToken(_messaging!.fcmToken!, cookieHeader)
                 .catchError((e) {
-              print(e);
+              debugPrint(e);
             });
             await registerSessionCookie(cookieHeader, response.request!.url);
             if (jsonResponse["refreshToken"] is String) {
@@ -274,9 +275,9 @@ class LoginPageState extends State<LoginPage> {
           }
         }
       }
-      print("Signing into Everglot failed: " + response.body);
+      debugPrint("Signing into Everglot failed: " + response.body);
       final jsonResponse = json.decode(response.body);
-      print(jsonResponse);
+      debugPrint(jsonResponse);
       if (jsonResponse != null &&
           jsonResponse["success"] == false &&
           jsonResponse["message"] != null) {

@@ -10,29 +10,29 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 String getGoogleClientId() {
   // Causes Platform exception 10
   // if (Platform.isAndroid) {
-  //   print("Using Android client ID");
+  //   debugPrint("Using Android client ID");
   //   return GOOGLE_CLIENT_ID_ANDROID;
   // }
   if (Platform.isIOS) {
     if (kDebugMode) {
-      print("Using iOS client ID");
+      debugPrint("Using iOS client ID");
     }
-    return GOOGLE_CLIENT_ID_IOS;
+    return EverglotGoogleClient.idIOS;
   }
   if (kDebugMode) {
-    print("Using web client ID");
+    debugPrint("Using web client ID");
   }
-  return GOOGLE_CLIENT_ID_WEB;
+  return EverglotGoogleClient.idWeb;
 }
 
 Future<http.Response> tryGoogleLogin(String idToken) async {
   if (kDebugMode) {
-    print("tryGoogleLogin");
+    debugPrint("tryGoogleLogin");
   }
   final loginUrl = await getEverglotUrl(path: "/login");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
-        "method": EVERGLOT_AUTH_METHOD_GOOGLE,
+        "method": EverglotAuthMethod.google,
         "idToken": idToken,
         "generateRefreshToken": true
       }),
@@ -43,12 +43,12 @@ Future<http.Response> tryGoogleLogin(String idToken) async {
 
 Future<http.Response> tryEmailLogin(String email, String password) async {
   if (kDebugMode) {
-    print("tryEmailLogin");
+    debugPrint("tryEmailLogin");
   }
   final loginUrl = await getEverglotUrl(path: "/login");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
-        "method": EVERGLOT_AUTH_METHOD_EMAIL,
+        "method": EverglotAuthMethod.email,
         "email": email,
         "password": password,
         "generateRefreshToken": true
@@ -60,16 +60,16 @@ Future<http.Response> tryEmailLogin(String email, String password) async {
 
 Future<http.Response> tryGoogleSignUp(String idToken) async {
   if (kDebugMode) {
-    print("tryGoogleSignUp");
+    debugPrint("tryGoogleSignUp");
   }
   final loginUrl = await getEverglotUrl(path: "/join");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
-        "method": EVERGLOT_AUTH_METHOD_GOOGLE,
+        "method": EverglotAuthMethod.google,
         "idToken": idToken,
         "token": Platform.isIOS
-            ? EVERGLOT_SIGN_UP_TOKEN_IOS
-            : (Platform.isAndroid ? EVERGLOT_SIGN_UP_TOKEN_ANDROID : null),
+            ? EverglotSignupToken.ios
+            : (Platform.isAndroid ? EverglotSignupToken.android : null),
         "generateRefreshToken": true
       }),
       headers: {
@@ -79,17 +79,17 @@ Future<http.Response> tryGoogleSignUp(String idToken) async {
 
 Future<http.Response> tryEmailSignUp(String email, String password) async {
   if (kDebugMode) {
-    print("tryEmailSignUp");
+    debugPrint("tryEmailSignUp");
   }
   final loginUrl = await getEverglotUrl(path: "/join");
   return http.post(Uri.parse(loginUrl),
       body: jsonEncode({
-        "method": EVERGLOT_AUTH_METHOD_EMAIL,
+        "method": EverglotAuthMethod.email,
         "email": email,
         "password": password,
         "token": Platform.isIOS
-            ? EVERGLOT_SIGN_UP_TOKEN_IOS
-            : (Platform.isAndroid ? EVERGLOT_SIGN_UP_TOKEN_ANDROID : null),
+            ? EverglotSignupToken.ios
+            : (Platform.isAndroid ? EverglotSignupToken.android : null),
         "generateRefreshToken": true
       }),
       headers: {
@@ -99,7 +99,7 @@ Future<http.Response> tryEmailSignUp(String email, String password) async {
 
 Future<void> tryRegisterFcmToken(String fcmToken, String cookieHeader) async {
   if (kDebugMode) {
-    print("tryRegisterFcmToken");
+    debugPrint("tryRegisterFcmToken");
   }
   final fcmTokenRegistrationUrl =
       await getEverglotUrl(path: "/users/fcm-token/register/$fcmToken");
@@ -112,14 +112,15 @@ Future<void> tryRegisterFcmToken(String fcmToken, String cookieHeader) async {
     final int statusCode = response.statusCode;
     if (kDebugMode) {
       if (statusCode == 200) {
-        print("Successfully registered FCM token with Everglot!");
+        debugPrint("Successfully registered FCM token with Everglot!");
       } else {
-        print("Registering FCM token with Everglot failed: ${response.body}");
+        debugPrint(
+            "Registering FCM token with Everglot failed: ${response.body}");
       }
     }
   }).onError((error, stackTrace) {
     if (kDebugMode) {
-      print('FCM token registration request produced an error');
+      debugPrint('FCM token registration request produced an error');
     }
     return Future.error("FCM token registration request produced an error");
   });
@@ -136,7 +137,7 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
       DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch;
 
   if (kDebugMode) {
-    print("Setting session cookie: " + cookieHeader);
+    debugPrint("Setting session cookie: " + cookieHeader);
   }
   final cookie = Cookie.fromSetCookieValue(cookieHeader);
   await cookieManager.setCookie(
@@ -153,7 +154,7 @@ Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
 }
 
 Future<inappwebview.Cookie?> getStoredSessionCookie(
-    {String name = everglotSessionIdCookieHeaderName}) async {
+    {String name = EverglotSessionIdCookie.headerName}) async {
   final cookieManager = _getCookieManager();
 
   final url = await getEverglotUrl(path: "/login");
@@ -164,18 +165,20 @@ Future<inappwebview.Cookie?> getStoredSessionCookie(
   }
 
   if (kDebugMode) {
-    print("Retrieved stored session cookie for URL $url: " + cookie.toString());
+    debugPrint(
+        "Retrieved stored session cookie for URL $url: " + cookie.toString());
   }
   return cookie;
 }
 
 Future<void> removeStoredSessionCookie(
-    {String name = everglotSessionIdCookieHeaderName}) async {
+    {String name = EverglotSessionIdCookie.headerName}) async {
   final cookieManager = _getCookieManager();
 
   final url = await getEverglotUrl(path: "/login");
   if (kDebugMode) {
-    print("Removing any stored session cookie for URL $url and name $name");
+    debugPrint(
+        "Removing any stored session cookie for URL $url and name $name");
   }
   await cookieManager.deleteCookie(url: Uri.parse(url), name: name);
 }
@@ -183,7 +186,7 @@ Future<void> removeStoredSessionCookie(
 const refreshTokenKey = 'REFRESH_TOKEN';
 Future<void> registerRefreshToken(String refreshToken) async {
   if (kDebugMode) {
-    print("Storing refresh token: $refreshToken");
+    debugPrint("Storing refresh token: $refreshToken");
   }
   const storage = FlutterSecureStorage();
   const iOptions = IOSOptions(accessibility: IOSAccessibility.first_unlock);
@@ -192,14 +195,14 @@ Future<void> registerRefreshToken(String refreshToken) async {
         key: refreshTokenKey, value: refreshToken, iOptions: iOptions);
   } catch (e) {
     if (kDebugMode) {
-      print("Failed to store refresh token in secure storage: $e");
+      debugPrint("Failed to store refresh token in secure storage: $e");
     }
   }
 }
 
 Future<String?> getRefreshToken() async {
   if (kDebugMode) {
-    print("Retrieving refresh token");
+    debugPrint("Retrieving refresh token");
   }
   const storage = FlutterSecureStorage();
   const iOptions = IOSOptions(accessibility: IOSAccessibility.first_unlock);
@@ -207,7 +210,7 @@ Future<String?> getRefreshToken() async {
     return await storage.read(key: refreshTokenKey, iOptions: iOptions);
   } catch (e) {
     if (kDebugMode) {
-      print("Failed to retrieve refresh token from secure storage: $e");
+      debugPrint("Failed to retrieve refresh token from secure storage: $e");
     }
     return null;
   }
@@ -215,7 +218,7 @@ Future<String?> getRefreshToken() async {
 
 Future<void> removeRefreshToken() async {
   if (kDebugMode) {
-    print("Retrieving refresh token");
+    debugPrint("Retrieving refresh token");
   }
   const storage = FlutterSecureStorage();
   const iOptions = IOSOptions(accessibility: IOSAccessibility.first_unlock);
@@ -223,14 +226,14 @@ Future<void> removeRefreshToken() async {
     await storage.delete(key: refreshTokenKey, iOptions: iOptions);
   } catch (e) {
     if (kDebugMode) {
-      print("Failed to remove refresh token from secure storage: $e");
+      debugPrint("Failed to remove refresh token from secure storage: $e");
     }
   }
 }
 
 Future<http.Response> trySignInWithRefreshToken(String refreshToken) async {
   if (kDebugMode) {
-    print("trySignInWithRefreshToken");
+    debugPrint("trySignInWithRefreshToken");
   }
   final refreshUrl = await getEverglotUrl(path: "/auth/refresh");
   return http.post(Uri.parse(refreshUrl),
@@ -246,7 +249,7 @@ Future<bool> reauthenticate(String refreshToken) async {
     response = await trySignInWithRefreshToken(refreshToken);
   } catch (e) {
     if (kDebugMode) {
-      print("Error during auth refresh: $e");
+      debugPrint("Error during auth refresh: $e");
     }
     return false;
   }
@@ -254,7 +257,8 @@ Future<bool> reauthenticate(String refreshToken) async {
 
   if (statusCode != 200) {
     if (kDebugMode) {
-      print("Status code 200 expected during auth refresh, got $statusCode");
+      debugPrint(
+          "Status code 200 expected during auth refresh, got $statusCode");
     }
     return false;
   }
@@ -265,14 +269,14 @@ Future<bool> reauthenticate(String refreshToken) async {
   final jsonResponse = json.decode(response.body);
   if (jsonResponse == null || jsonResponse["success"] != true) {
     if (kDebugMode) {
-      print(
+      debugPrint(
           "Auth refresh response is invalid or indicates failure: ${response.body}");
     }
     return false;
   }
 
   if (kDebugMode) {
-    print("Auth refresh API call successful");
+    debugPrint("Auth refresh API call successful");
   }
 
   if (jsonResponse["refreshToken"] is String) {
@@ -286,7 +290,7 @@ Future<bool> reauthenticate(String refreshToken) async {
   final cookieHeader = response.headers[HttpHeaders.setCookieHeader];
   if (cookieHeader == null) {
     if (kDebugMode) {
-      print("Something went wrong, cannot get session cookie.");
+      debugPrint("Something went wrong, cannot get session cookie.");
     }
     return false;
   }

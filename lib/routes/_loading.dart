@@ -17,7 +17,7 @@ class LoadingScreen extends StatelessWidget {
                   child: Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
+                children: const <Widget>[
                   CircularProgressIndicator(color: primaryColor),
                 ],
               ))

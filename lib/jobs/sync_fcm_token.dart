@@ -14,7 +14,7 @@ Future<bool> syncFcmToken(dynamic inputData) async {
   final refreshToken = await getRefreshToken();
   if (refreshToken == null) {
     if (kDebugMode) {
-      print("No refresh token, app has probably never signed in");
+      debugPrint("No refresh token, app has probably never signed in");
     }
     scheduleNextIOSJob();
     return true;
@@ -22,7 +22,7 @@ Future<bool> syncFcmToken(dynamic inputData) async {
   try {
     if (JwtDecoder.isExpired(refreshToken)) {
       if (kDebugMode) {
-        print(
+        debugPrint(
             "Refresh token has expired, cannot use it to synchronize FCM token");
       }
       scheduleNextIOSJob();
@@ -30,7 +30,7 @@ Future<bool> syncFcmToken(dynamic inputData) async {
     }
   } catch (e) {
     if (kDebugMode) {
-      print(
+      debugPrint(
           "Failed to check if refresh token has expired, it seems to not even be a valid JWT.");
     }
 
@@ -40,7 +40,7 @@ Future<bool> syncFcmToken(dynamic inputData) async {
 
   if (!await reauthenticate(refreshToken)) {
     if (kDebugMode) {
-      print(
+      debugPrint(
           "Reauthentication failed, FCM token synchronization is impossible.");
     }
 
@@ -51,27 +51,28 @@ Future<bool> syncFcmToken(dynamic inputData) async {
   final fcmToken = await getFcmToken();
   if (fcmToken == null || fcmToken.isEmpty) {
     if (kDebugMode) {
-      print("Device has no FCM token, synchronization is impossible.");
+      debugPrint("Device has no FCM token, synchronization is impossible.");
     }
     scheduleNextIOSJob();
     return false;
   }
   final sessionIdCookie = await getStoredSessionCookie();
   if (sessionIdCookie == null) {
-    print(
+    debugPrint(
         "Could not get session ID even though just reauthenticated, FCM token synchronization is impossible.");
     scheduleNextIOSJob();
     return false;
   }
   try {
     if (kDebugMode) {
-      print("Synchronizing FCM token after successful refresh authentication");
+      debugPrint(
+          "Synchronizing FCM token after successful refresh authentication");
     }
     await tryRegisterFcmToken(fcmToken,
-        "$everglotSessionIdCookieHeaderName=${sessionIdCookie.value}");
+        "${EverglotSessionIdCookie.headerName}=${sessionIdCookie.value}");
   } catch (e) {
     if (kDebugMode) {
-      print("Error during FCM token registration: $e");
+      debugPrint("Error during FCM token registration: $e");
     }
     scheduleNextIOSJob();
     return false;

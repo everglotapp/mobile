@@ -206,7 +206,7 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                               request.body =
                                   jsonEncode({"refreshToken": refreshToken});
                               if (kDebugMode) {
-                                print(
+                                debugPrint(
                                     "Intercepting logout to add refreshToken to be invalidated, refreshToken: $refreshToken");
                               }
                               return request;
@@ -274,7 +274,7 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                                   await getEverglotUrl(path: "/join")) ||
                               url.startsWith(
                                   await getEverglotUrl(path: "/login"))) {
-                            print(
+                            debugPrint(
                                 "Logged out state detected, switching to login screen and removing stored cookie");
                             await removeStoredSessionCookie();
 
@@ -283,10 +283,14 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                                 arguments: LoginPageArguments(
                                     signedOut: true, forcePath: uri!.path));
                           }
-                          print("Visited URL: $url");
+                          if (kDebugMode) {
+                            debugPrint("Visited URL: $url");
+                          }
                         },
                         onConsoleMessage: (controller, consoleMessage) {
-                          print(consoleMessage);
+                          if (kDebugMode) {
+                            debugPrint(consoleMessage.toString());
+                          }
                         },
                       ))));
         });
