@@ -218,7 +218,7 @@ Future<String?> getRefreshToken() async {
 
 Future<void> removeRefreshToken() async {
   if (kDebugMode) {
-    debugPrint("Retrieving refresh token");
+    debugPrint("Removing refresh token");
   }
   const storage = FlutterSecureStorage();
   const iOptions = IOSOptions(accessibility: IOSAccessibility.first_unlock);

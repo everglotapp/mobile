@@ -181,7 +181,7 @@ class LoginPageState extends State<LoginPage> {
     if (refreshToken == null) {
       if (kDebugMode) {
         debugPrint(
-            "Cannot reauth via refresh token no refresh token could be retrieved");
+            "Cannot reauth via refresh token, no refresh token could be retrieved");
       }
     } else {
       if (JwtDecoder.isExpired(refreshToken)) {
@@ -189,6 +189,7 @@ class LoginPageState extends State<LoginPage> {
           debugPrint(
               "Reauth via refresh token cancelled as refresh token has expired");
         }
+        removeRefreshToken();
       } else {
         final reauthedSuccessfully = await reauthenticate(refreshToken);
         if (reauthedSuccessfully) {

@@ -25,6 +25,7 @@ Future<bool> syncFcmToken(dynamic inputData) async {
         debugPrint(
             "Refresh token has expired, cannot use it to synchronize FCM token");
       }
+      removeRefreshToken();
       scheduleNextIOSJob();
       return true;
     }
