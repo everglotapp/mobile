@@ -69,8 +69,8 @@ Future<bool> syncFcmToken(dynamic inputData) async {
       debugPrint(
           "Synchronizing FCM token after successful refresh authentication");
     }
-    await tryRegisterFcmToken(
-        fcmToken, "${EverglotSessionIdCookie.name}=${sessionIdCookie.value}");
+    await tryRegisterFcmToken(fcmToken,
+        "${EverglotSessionIdCookie.nameSuffix}=${sessionIdCookie.value}");
   } catch (e) {
     if (kDebugMode) {
       debugPrint("Error during FCM token registration: $e");

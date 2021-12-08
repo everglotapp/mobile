@@ -21,6 +21,4 @@ class EverglotSignupToken {
 
 class EverglotSessionIdCookie {
   static const nameSuffix = "everglot_sid";
-  // __Host- prefix requires HTTPS which we don't want to enforce in dev
-  static const name = kDebugMode ? nameSuffix : "__Host-$nameSuffix";
 }

@@ -130,34 +130,45 @@ inappwebview.CookieManager _getCookieManager() {
   return inappwebview.CookieManager.instance();
 }
 
-Future<void> registerSessionCookie(String cookieHeader, Uri url) async {
+Future<void> registerSessionCookie(String cookieHeader) async {
   final cookieManager = _getCookieManager();
   // set the expiration date for the cookie in milliseconds
   final defaultExpiryMs =
-      DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch;
+      DateTime.now().add(const Duration(hours: 12)).millisecondsSinceEpoch;
 
-  if (kDebugMode) {
-    debugPrint("Setting session cookie: " + cookieHeader);
-  }
+  // Assume Set-Cookie response header only contains session ID cookie
   final cookie = Cookie.fromSetCookieValue(cookieHeader);
+  final url = await getEverglotUrl(path: "/");
+  if (kDebugMode) {
+    debugPrint(
+        "Setting session cookie from Set-Cookie header (url: $url, name: ${cookie.name}, path: ${cookie.path ?? "/"}, value: ${cookie.value}, domain: ${cookie.domain}, expiresDate: ${cookie.expires == null ? defaultExpiryMs : cookie.expires!.millisecondsSinceEpoch}, secure: ${cookie.secure}, httpOnly: ${cookie.httpOnly})");
+  }
   await cookieManager.setCookie(
-    url: url,
-    path: cookie.path ?? "/",
-    name: cookie.name,
-    value: cookie.value,
-    domain: cookie.domain,
-    expiresDate: cookie.expires == null
-        ? defaultExpiryMs
-        : cookie.expires!.millisecondsSinceEpoch,
-    isSecure: !kDebugMode,
-  );
+      url: Uri.parse(url),
+      path: cookie.path ?? "/",
+      name: EverglotSessionIdCookie.nameSuffix,
+      value: cookie.value,
+      domain: null,
+      expiresDate: cookie.expires == null
+          ? defaultExpiryMs
+          : cookie.expires!.millisecondsSinceEpoch,
+      isHttpOnly: cookie.httpOnly,
+      sameSite: inappwebview.HTTPCookieSameSitePolicy.STRICT,
+      isSecure: cookie.secure);
 }
 
 Future<inappwebview.Cookie?> getStoredSessionCookie(
-    {String name = EverglotSessionIdCookie.name}) async {
+    {String name = EverglotSessionIdCookie.nameSuffix}) async {
   final cookieManager = _getCookieManager();
 
-  final url = await getEverglotUrl(path: "/login");
+  final url = await getEverglotUrl(path: "/");
+  if (kDebugMode) {
+    debugPrint("Getting session cookie (url: $url, name: $name)");
+  }
+  final cookies = await cookieManager.getCookies(url: Uri.parse(url));
+  if (kDebugMode) {
+    debugPrint("All cookies: ${cookies.toString()}");
+  }
   final cookie = await cookieManager.getCookie(url: Uri.parse(url), name: name);
 
   if (cookie == null) {
@@ -166,19 +177,20 @@ Future<inappwebview.Cookie?> getStoredSessionCookie(
 
   if (kDebugMode) {
     debugPrint(
-        "Retrieved stored session cookie for URL $url: " + cookie.toString());
+        "Retrieved stored session cookie for (url: $url, name: $name): " +
+            cookie.toString());
   }
   return cookie;
 }
 
 Future<void> removeStoredSessionCookie(
-    {String name = EverglotSessionIdCookie.name}) async {
+    {String name = EverglotSessionIdCookie.nameSuffix}) async {
   final cookieManager = _getCookieManager();
 
-  final url = await getEverglotUrl(path: "/login");
+  final url = await getEverglotUrl(path: "/");
   if (kDebugMode) {
     debugPrint(
-        "Removing any stored session cookie for URL $url and name $name");
+        "Removing stored session cookie if exists (url: $url, name: $name)");
   }
   await cookieManager.deleteCookie(url: Uri.parse(url), name: name);
 }
@@ -294,6 +306,6 @@ Future<bool> reauthenticate(String refreshToken) async {
     }
     return false;
   }
-  await registerSessionCookie(cookieHeader, response.request!.url);
+  await registerSessionCookie(cookieHeader);
   return true;
 }

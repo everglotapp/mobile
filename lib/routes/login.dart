@@ -119,7 +119,7 @@ class LoginPageState extends State<LoginPage> {
             tryRegisterFcmToken(fcmToken, cookieHeader).catchError((e) {
               debugPrint(e);
             });
-            await registerSessionCookie(cookieHeader, response.request!.url);
+            await registerSessionCookie(cookieHeader);
             if (jsonResponse["refreshToken"] is String) {
               final refreshToken = jsonResponse["refreshToken"] as String;
               if (refreshToken.isNotEmpty) {
@@ -135,29 +135,42 @@ class LoginPageState extends State<LoginPage> {
           }
         }
       }
-      final jsonResponse = json.decode(response.body);
-      if (jsonResponse != null &&
-          jsonResponse["success"] == false &&
-          jsonResponse["message"] != null) {
+      try {
+        final jsonResponse = json.decode(response.body);
+        if (jsonResponse != null &&
+            jsonResponse["success"] == false &&
+            jsonResponse["message"] != null) {
+          setState(() {
+            _feedback = jsonResponse["message"];
+          });
+        }
+      } catch (e) {
         setState(() {
-          _feedback = jsonResponse["message"];
+          _feedback =
+              "Something went wrong on our end here, maybe try again? [#5po2]";
         });
+        if (kDebugMode) {
+          debugPrint("Failed to parse failed Google login result body");
+        }
       }
 
       setState(() {
         _triedAutoSignIn = true;
       });
       if (kDebugMode) {
-        debugPrint("Signing into Everglot failed: " + response.body);
+        debugPrint(
+            "Signing up / into Everglot via Google failed: " + response.body);
       }
     }).onError((error, stackTrace) {
       if (kDebugMode) {
-        debugPrint('Login request produced an error: ' + error.toString());
+        debugPrint(
+            'Google login request produced an error: ' + error.toString());
         debugPrint(stackTrace.toString());
       }
 
       setState(() {
         _triedAutoSignIn = true;
+        _feedback = "Hmm, something went wrong. Is your Internet working?";
       });
       return Future.value();
     });
@@ -235,8 +248,6 @@ class LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Future<void> _handleGoogleSignOut() => _googleSignIn.disconnect();
-
   Future<void> _handleEmailSignInOrUp() async {
     setState(() {
       _feedback = null;
@@ -264,7 +275,7 @@ class LoginPageState extends State<LoginPage> {
                 .catchError((e) {
               debugPrint(e);
             });
-            await registerSessionCookie(cookieHeader, response.request!.url);
+            await registerSessionCookie(cookieHeader);
             if (jsonResponse["refreshToken"] is String) {
               final refreshToken = jsonResponse["refreshToken"] as String;
               if (refreshToken.isNotEmpty) {
@@ -276,16 +287,41 @@ class LoginPageState extends State<LoginPage> {
           }
         }
       }
-      debugPrint("Signing into Everglot failed: " + response.body);
-      final jsonResponse = json.decode(response.body);
-      debugPrint(jsonResponse);
-      if (jsonResponse != null &&
-          jsonResponse["success"] == false &&
-          jsonResponse["message"] != null) {
+      debugPrint(
+          "Signing up / into Everglot via email failed: " + response.body);
+      try {
+        final jsonResponse = json.decode(response.body);
+        if (kDebugMode) {
+          debugPrint(jsonResponse.toString());
+        }
+        if (jsonResponse != null &&
+            jsonResponse["success"] == false &&
+            jsonResponse["message"] != null) {
+          setState(() {
+            _feedback = jsonResponse["message"];
+          });
+        }
+      } catch (e) {
         setState(() {
-          _feedback = jsonResponse["message"];
+          _feedback =
+              "Something went wrong on our end here, maybe try again? [#0l8n]";
         });
+        if (kDebugMode) {
+          debugPrint("Failed to parse failed email login result body");
+        }
       }
+    }).onError((error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint(
+            'Email login request produced an error: ' + error.toString());
+        debugPrint(stackTrace.toString());
+      }
+
+      setState(() {
+        _triedAutoSignIn = true;
+        _feedback = "Hmm, something went wrong. Is your Internet working?";
+      });
+      return Future.value();
     });
   }
 
@@ -300,13 +336,18 @@ class LoginPageState extends State<LoginPage> {
     final args =
         ModalRoute.of(context)!.settings.arguments as LoginPageArguments?;
     final path = widget.forcePath ?? (args?.forcePath);
+    debugPrint(
+        "Transitioning to web app with ${path == null ? "no forced path" : "forced path: $path"}");
     await Navigator.pushReplacementNamed(context, WebAppContainer.routeName,
         arguments: WebAppArguments(forcePath: path));
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_triedAutoSignIn) {
+    final args =
+        ModalRoute.of(context)!.settings.arguments as LoginPageArguments?;
+    final signedOut = args != null && args.signedOut;
+    if (!signedOut && !_triedAutoSignIn) {
       return const SplashScreen();
     }
     if (_transitioningToWebapp) {

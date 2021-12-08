@@ -94,6 +94,9 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
         if (_webViewController == null) {
           return;
         }
+        if (kDebugMode) {
+          debugPrint("goto: $forcePath");
+        }
         final jsResult =
             await _webViewController!.evaluateJavascript(source: """
           (function() {
@@ -227,9 +230,9 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                             if (await canLaunch(url)) {
                               // Launch the App
                               await launch(url);
-                              // and cancel the request
-                              return NavigationActionPolicy.CANCEL;
                             }
+                            // Cancel the request
+                            return NavigationActionPolicy.CANCEL;
                           }
                           // Forbid non-Everglot URLs.
                           if (!url.startsWith(await getEverglotUrl(path: ""))) {
@@ -243,15 +246,23 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                             return NavigationActionPolicy.CANCEL;
                           }
 
+                          if (kDebugMode) {
+                            final cookie = await getStoredSessionCookie();
+                            debugPrint(
+                                "shouldOverrideUrlLoading (url: $url, cookie: ${cookie == null ? "no cookie" : cookie.toString()}");
+                            debugPrint(navigationAction.request.toString());
+                          }
                           return NavigationActionPolicy.ALLOW;
                         },
                         onLoadStop: (controller, uri) async {
                           pullToRefreshController.endRefreshing();
                           final url = uri.toString();
-                          setState(() {
-                            this.url = url;
-                            urlController.text = this.url;
-                          });
+                          if (mounted) {
+                            setState(() {
+                              this.url = url;
+                              urlController.text = this.url;
+                            });
+                          }
                         },
                         onLoadError: (controller, url, code, message) {
                           pullToRefreshController.endRefreshing();
@@ -266,15 +277,22 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
                         },
                         onUpdateVisitedHistory:
                             (controller, uri, androidIsReload) async {
+                          if (kDebugMode) {
+                            final cookie = await getStoredSessionCookie();
+                            debugPrint(
+                                "onUpdateVisitedHistory (url: $url, cookie: ${cookie == null ? "no cookie" : cookie.toString()}");
+                          }
                           final visitedUrl = uri.toString();
-                          setState(() {
-                            url = visitedUrl;
-                            urlController.text = visitedUrl;
-                          });
+                          if (mounted) {
+                            setState(() {
+                              url = visitedUrl;
+                              urlController.text = visitedUrl;
+                            });
+                          }
                           // Prevent /login and /join routes from showing.
-                          if (url.startsWith(
+                          if (visitedUrl.startsWith(
                                   await getEverglotUrl(path: "/join")) ||
-                              url.startsWith(
+                              visitedUrl.startsWith(
                                   await getEverglotUrl(path: "/login"))) {
                             debugPrint(
                                 "Logged out state detected, switching to login screen and removing stored cookie");
@@ -282,8 +300,7 @@ class WebAppState extends State<WebAppContainer> with WidgetsBindingObserver {
 
                             await Navigator.popAndPushNamed(
                                 context, LoginPage.routeName,
-                                arguments: LoginPageArguments(
-                                    signedOut: true, forcePath: uri!.path));
+                                arguments: LoginPageArguments(signedOut: true));
                           }
                           if (kDebugMode) {
                             debugPrint("Visited URL: $url");
