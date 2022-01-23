@@ -55,10 +55,12 @@ Future<String?> getFcmToken() async {
     // }
   }
   String? token = await messaging.getToken();
-  if (token != null) {
-    debugPrint("Got FCM token $token");
-  } else {
-    debugPrint("Failed to get FCM token");
+  if (kDebugMode) {
+    if (token != null) {
+      debugPrint("Got FCM token $token");
+    } else {
+      debugPrint("Failed to get FCM token");
+    }
   }
   return token;
 }
